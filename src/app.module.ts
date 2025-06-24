@@ -15,6 +15,9 @@ const { MONGO_USER, MONGO_PASSWORD, MONGO_PORT, MONGO_HOST, MONGO_DATABASE } =
     MongooseModule.forRoot(
       `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}
       /${MONGO_DATABASE}`,
+      {
+        dbName: MONGO_DATABASE,
+      },
     ),
     UserModule,
   ],
