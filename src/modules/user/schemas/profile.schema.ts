@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Address } from './address.schema';
 import { SocialNetworks } from './social-networks.schema';
 
-@Schema()
+@Schema({ _id: false })
 export class Profile {
   @Prop()
   name: string;

@@ -12,7 +12,7 @@ export class ResponseUserDto {
   role: string;
 
   @Expose()
-  profile: Profile; // Podés tiparlo mejor si querés
+  profile: Profile;
 
   @Expose()
   createdAt: Date;
@@ -22,4 +22,7 @@ export class ResponseUserDto {
 
   @Exclude()
   passwordHash: string;
+
+  @Exclude()
+  __v?: number;
 }

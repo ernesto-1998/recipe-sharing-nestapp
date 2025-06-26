@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Coordinates } from './coordinates.schema';
 
-@Schema()
+@Schema({ _id: false })
 export class Address {
   @Prop()
   country: string;

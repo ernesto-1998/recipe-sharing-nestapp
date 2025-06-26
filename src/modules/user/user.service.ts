@@ -1,19 +1,18 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 
 import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
-import { User, UserDocument } from './schemas/user.schema';
+import { User } from './schemas/user.schema';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
     const existingUser: User | null = await this.findByEmail(
       createUserDto.email,
     );
@@ -24,34 +23,32 @@ export class UserService {
       10,
     );
 
-    const createdUser = new this.userModel({
+    const createdUser = await this.userRepository.create({
       ...createUserDto,
       passwordHash: hashedPassword,
     });
-    const savedUser = await createdUser.save();
-    const savedUserWithoutPassword = plainToInstance(
-      ResponseUserDto,
-      savedUser.toObject(),
+    const savedUser = plainToInstance(ResponseUserDto, createdUser.toObject());
+    return savedUser;
+  }
+
+  async findAll(): Promise<ResponseUserDto[]> {
+    const users = await this.userRepository.findAll();
+    const reponseUsers = users.map((user) =>
+      plainToInstance(ResponseUserDto, user.toObject()),
     );
-    return savedUserWithoutPassword;
+    return reponseUsers;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  findOne(username?: string, email?: string): Promise<User | null> {
+    return this.userRepository.findOne(username, email);
   }
 
-  async findOne(username?: string, email?: string): Promise<User | null> {
-    return this.userModel.findOne({
-      $or: [{ email: email }, { username: username }],
-    });
+  findByUsername(username: string): Promise<User | null> {
+    return this.userRepository.findOne(username);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
-    return this.userModel.findOne({ username: username }).exec();
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.userModel.findOne({ email: email }).exec();
+  findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findByEmail(email);
   }
 
   //update(id: number, updateUserDto: UpdateUserDto) {
