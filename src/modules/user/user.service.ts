@@ -1,12 +1,16 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { plainToInstance } from 'class-transformer';
 
 import { CreateUserDto } from './dto/create-user.dto';
-//import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
 import { User } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
+import { UserMapper } from './user.mapper';
 
 @Injectable()
 export class UserService {
@@ -23,39 +27,53 @@ export class UserService {
       10,
     );
 
-    const createdUser = await this.userRepository.create({
+    const user = await this.userRepository.create({
       ...createUserDto,
       passwordHash: hashedPassword,
     });
-    const savedUser = plainToInstance(ResponseUserDto, createdUser.toObject());
-    return savedUser;
+    return UserMapper.toResponse(user);
+  }
+
+  async update(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<ResponseUserDto> {
+    const user = await this.userRepository.updateById(userId, updateUserDto);
+    if (user === null)
+      throw new NotFoundException('User with this ID does not exists.');
+    return UserMapper.toResponse(user);
+  }
+
+  async remove(userId: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.deleteById(userId);
+    if (user === null)
+      throw new NotFoundException('User with this ID does not exists.');
+    return UserMapper.toResponse(user);
   }
 
   async findAll(): Promise<ResponseUserDto[]> {
     const users = await this.userRepository.findAll();
-    const reponseUsers = users.map((user) =>
-      plainToInstance(ResponseUserDto, user.toObject()),
-    );
-    return reponseUsers;
+    return UserMapper.toResponseMany(users);
   }
 
-  findOne(username?: string, email?: string): Promise<User | null> {
-    return this.userRepository.findOne(username, email);
+  async findById(userId: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findById(userId);
+    if (user === null)
+      throw new NotFoundException('User with this ID does not exists.');
+    return UserMapper.toResponse(user);
   }
 
-  findByUsername(username: string): Promise<User | null> {
-    return this.userRepository.findOne(username);
+  async findByUsername(username: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findByUsername(username);
+    if (user === null)
+      throw new NotFoundException('User with this username does not exists.');
+    return UserMapper.toResponse(user);
   }
 
-  findByEmail(email: string): Promise<User | null> {
-    return this.userRepository.findByEmail(email);
-  }
-
-  //update(id: number, updateUserDto: UpdateUserDto) {
-  //return `This action updates a #${id} user`;
-  //}
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async findByEmail(email: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findByEmail(email);
+    if (user === null)
+      throw new NotFoundException('User with this email does not exists.');
+    return UserMapper.toResponse(user);
   }
 }

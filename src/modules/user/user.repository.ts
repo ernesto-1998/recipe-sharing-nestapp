@@ -5,21 +5,20 @@ import { Model } from 'mongoose';
 
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserRepository {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+  ) {}
 
   findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }
 
-  findOne(username?: string, email?: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({
-        $or: [{ email: email }, { username: username }],
-      })
-      .exec();
+  findById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findById(userId).exec();
   }
 
   findByUsername(username: string): Promise<UserDocument | null> {
@@ -33,5 +32,22 @@ export class UserRepository {
   create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
+  }
+
+  updateById(
+    userId: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $set: updateUserDto },
+        { new: true, runValidators: true },
+      )
+      .exec();
+  }
+
+  deleteById(userId: string): Promise<UserDocument | null> {
+    return this.userModel.findByIdAndDelete(userId).exec();
   }
 }

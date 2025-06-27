@@ -7,10 +7,11 @@ import {
   MaxLength,
   IsNotEmpty,
   ValidateNested,
-  IsNumber,
 } from 'class-validator';
 
-// Coordinates DTO
+import { ProfileDto } from './profile.dto';
+
+/* // Coordinates DTO
 export class CoordinatesDto {
   @IsOptional()
   @IsNumber()
@@ -95,7 +96,7 @@ export class ProfileDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
-}
+} */
 
 // User DTO
 export class CreateUserDto {
