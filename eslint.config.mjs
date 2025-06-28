@@ -29,7 +29,13 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+    },
+  },
+  {
+    files: ['**/*.spec.ts'], // Aplica solo a archivos de prueba
+    rules: {
+      '@typescript-eslint/unbound-method': 'off', // Desactiva esta regla solo en tests
     },
   },
 );

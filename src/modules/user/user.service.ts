@@ -8,7 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
-import { User } from './schemas/user.schema';
+import { User, UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 import { UserMapper } from './user.mapper';
 
@@ -17,7 +17,7 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    const existingUser: User | null = await this.findByEmail(
+    const existingUser: User | null = await this.checkIfUserExistsByEmail(
       createUserDto.email,
     );
     if (existingUser != null)
@@ -75,5 +75,9 @@ export class UserService {
     if (user === null)
       throw new NotFoundException('User with this email does not exists.');
     return UserMapper.toResponse(user);
+  }
+
+  async checkIfUserExistsByEmail(email: string): Promise<UserDocument | null> {
+    return this.userRepository.findByEmail(email);
   }
 }
