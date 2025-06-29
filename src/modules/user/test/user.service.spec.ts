@@ -11,13 +11,12 @@ import {
   mockUpdateUser,
   mockUpdatedMongoUser,
 } from './mocks';
-
 import { UserService } from '../user.service';
 import { UserRepository } from '../user.repository';
+import { UserMapper } from '../user.mapper';
+import { UserDocument } from '../schemas/user.schema';
 
-jest.mock('bcrypt', () => ({
-  hash: jest.fn(),
-}));
+jest.mock('bcrypt');
 
 jest.mock('../user.mapper', () => ({
   UserMapper: {
@@ -27,9 +26,6 @@ jest.mock('../user.mapper', () => ({
 }));
 
 const hashedPassword = 'mockHashedPassword';
-
-import { UserMapper } from '../user.mapper';
-import { UserDocument } from '../schemas/user.schema';
 
 describe('UserService', () => {
   let userService: UserService;
@@ -45,8 +41,10 @@ describe('UserService', () => {
     findByUsername: jest.fn(),
   };
 
+  let module: TestingModule;
+
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         UserService,
         { provide: UserRepository, useValue: mockUserRepository },
@@ -55,8 +53,12 @@ describe('UserService', () => {
 
     userService = module.get<UserService>(UserService);
     userRepository = module.get<UserRepository>(UserRepository);
+  });
 
+  afterEach(async () => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
+    await module.close();
   });
 
   it('should be defined', () => {

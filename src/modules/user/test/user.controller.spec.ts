@@ -1,4 +1,3 @@
-// user.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   mockUser,
@@ -25,14 +24,21 @@ describe('UserController', () => {
     findByEmail: jest.fn(),
   };
 
+  let module: TestingModule;
+
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       controllers: [UserController],
       providers: [{ provide: UserService, useValue: mockUserService }],
     }).compile();
 
     userController = module.get<UserController>(UserController);
+  });
+
+  afterEach(async () => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
+    await module.close();
   });
 
   it('should be defined', () => {
