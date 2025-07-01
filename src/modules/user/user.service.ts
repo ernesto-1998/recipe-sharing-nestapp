@@ -17,19 +17,23 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    const existingUser: User | null = await this.checkIfUserExistsByEmail(
-      createUserDto.email,
-    );
-    if (existingUser != null)
+    const existingUserByEmail: User | null =
+      await this.checkIfUserExistsByEmail(createUserDto.email);
+    const existingUserByUsername: User | null =
+      await this.checkIfUserExistsByUsername(createUserDto.username);
+
+    if (existingUserByEmail != null)
       throw new ConflictException('User with this email already exists.');
+    if (existingUserByUsername !== null)
+      throw new ConflictException('User with this username already exists.');
     const hashedPassword: string = await bcrypt.hash(
-      createUserDto.passwordHash,
+      createUserDto.password,
       10,
     );
 
     const user = await this.userRepository.create({
       ...createUserDto,
-      passwordHash: hashedPassword,
+      password: hashedPassword,
     });
     return UserMapper.toResponse(user);
   }
@@ -79,5 +83,11 @@ export class UserService {
 
   async checkIfUserExistsByEmail(email: string): Promise<UserDocument | null> {
     return this.userRepository.findByEmail(email);
+  }
+
+  async checkIfUserExistsByUsername(
+    username: string,
+  ): Promise<UserDocument | null> {
+    return this.userRepository.findByUsername(username);
   }
 }

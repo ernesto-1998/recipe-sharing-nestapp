@@ -24,7 +24,7 @@ export class ResponseUserDto {
   updatedAt: Date;
 
   @Exclude()
-  passwordHash: string;
+  password: string;
 
   @Exclude()
   __v?: number;

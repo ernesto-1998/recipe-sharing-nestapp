@@ -3,7 +3,7 @@ import { ResponseUserDto } from '../../dto/response-user.dto';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { Profile } from '../../schemas/profile.schema';
 
-export type MockResponseUser = Omit<ResponseUserDto, 'passwordHash'>;
+export type MockResponseUser = Omit<ResponseUserDto, 'password'>;
 
 export const mockUser: MockResponseUser = {
   _id: '123',
@@ -18,7 +18,7 @@ export const mockUser: MockResponseUser = {
 export const mockCreateUser: CreateUserDto = {
   email: 'robert@example.com',
   username: 'robert123',
-  passwordHash: 'hashedPassword',
+  password: 'hashedPassword',
   role: 'user',
   profile: {} as Profile,
 };

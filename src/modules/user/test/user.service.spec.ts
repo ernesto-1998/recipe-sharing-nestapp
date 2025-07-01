@@ -70,6 +70,9 @@ describe('UserService', () => {
       jest
         .spyOn(userService, 'checkIfUserExistsByEmail')
         .mockResolvedValue(null);
+      jest
+        .spyOn(userService, 'checkIfUserExistsByUsername')
+        .mockResolvedValue(null);
 
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       (userRepository.create as jest.Mock).mockResolvedValue(mockMongoUser);
@@ -79,6 +82,9 @@ describe('UserService', () => {
 
       expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
         mockCreateUser.email,
+      );
+      expect(userService.checkIfUserExistsByUsername).toHaveBeenCalledWith(
+        mockCreateUser.username,
       );
       expect(bcrypt.hash).toHaveBeenCalledWith(mockCreateUser.passwordHash, 10);
       expect(userRepository.create).toHaveBeenCalledWith({
@@ -103,6 +109,32 @@ describe('UserService', () => {
 
       expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
         mockCreateUser.email,
+      );
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(userRepository.create).not.toHaveBeenCalled();
+      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when username already exists', async () => {
+      jest
+        .spyOn(userService, 'checkIfUserExistsByEmail')
+        .mockResolvedValue(null);
+      jest
+        .spyOn(userService, 'checkIfUserExistsByUsername')
+        .mockResolvedValue(mockMongoUser);
+
+      await expect(userService.create(mockCreateUser)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(userService.create(mockCreateUser)).rejects.toThrow(
+        'User with this username already exists.',
+      );
+
+      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+        mockCreateUser.email,
+      );
+      expect(userService.checkIfUserExistsByUsername).toHaveBeenCalledWith(
+        mockCreateUser.username,
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();

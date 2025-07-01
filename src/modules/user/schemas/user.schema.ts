@@ -13,7 +13,7 @@ export class User {
   username: string;
 
   @Prop({ required: true })
-  passwordHash: string;
+  password: string;
 
   @Prop({ required: true })
   role: string;

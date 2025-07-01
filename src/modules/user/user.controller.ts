@@ -2,31 +2,34 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Param,
   Patch,
   Delete,
+  UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ITokenUser } from '../auth/interfaces';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller({ version: '1', path: 'users' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    return await this.userService.create(createUserDto);
-  }
-
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() user: ITokenUser,
   ): Promise<ResponseUserDto> {
+    if (user.userId !== id) {
+      throw new ForbiddenException('You can only update your own profile.');
+    }
     return await this.userService.update(id, updateUserDto);
   }
 
