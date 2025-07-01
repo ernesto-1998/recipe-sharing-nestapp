@@ -12,7 +12,7 @@ import { UserService } from '../user/user.service';
 import { ResponseUserDto } from '../user/dto/response-user.dto';
 import { AuthResponseDto } from './dto/auth.response.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ITokenPayload } from './interfaces';
+import { ITokenUser } from './interfaces';
 import { CurrentUser } from './current-user.decorator';
 
 @Controller({ version: '1', path: 'auth' })
@@ -25,7 +25,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   @UseGuards(LocalAuthGuard)
-  async login(@CurrentUser() user: ITokenPayload): Promise<AuthResponseDto> {
+  async login(@CurrentUser() user: ITokenUser): Promise<AuthResponseDto> {
     return await this.authService.logIn(user);
   }
 

@@ -42,6 +42,24 @@ export class UserService {
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<ResponseUserDto> {
+    if (updateUserDto?.email) {
+      const emailExists = await this.userRepository.existsByEmail(
+        updateUserDto.email,
+        userId,
+      );
+      if (emailExists) {
+        throw new ConflictException('Email is already in use.');
+      }
+    }
+    if (updateUserDto?.username) {
+      const emailExists = await this.userRepository.existsByUsername(
+        updateUserDto.username,
+        userId,
+      );
+      if (emailExists) {
+        throw new ConflictException('Username is already in use.');
+      }
+    }
     const user = await this.userRepository.updateById(userId, updateUserDto);
     if (user === null)
       throw new NotFoundException('User with this ID does not exists.');

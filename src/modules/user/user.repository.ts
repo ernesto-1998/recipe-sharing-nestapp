@@ -34,6 +34,20 @@ export class UserRepository {
     return createdUser.save();
   }
 
+  async existsByEmail(email: string, userId: string): Promise<boolean> {
+    const user = await this.userModel
+      .findOne({ email, _id: { $ne: userId } })
+      .exec();
+    return !!user;
+  }
+
+  async existsByUsername(username: string, userId: string): Promise<boolean> {
+    const user = await this.userModel
+      .findOne({ username, _id: { $ne: userId } })
+      .exec();
+    return !!user;
+  }
+
   updateById(
     userId: string,
     updateUserDto: UpdateUserDto,
