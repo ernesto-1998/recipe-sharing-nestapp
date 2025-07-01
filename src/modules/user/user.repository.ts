@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { flattenObject } from 'src/common/utils/flatten';
 
 @Injectable()
 export class UserRepository {
@@ -40,7 +41,7 @@ export class UserRepository {
     return this.userModel
       .findByIdAndUpdate(
         userId,
-        { $set: updateUserDto },
+        { $set: flattenObject(updateUserDto as Record<string, unknown>) },
         { new: true, runValidators: true },
       )
       .exec();
