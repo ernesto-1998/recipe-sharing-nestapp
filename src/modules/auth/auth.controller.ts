@@ -14,6 +14,7 @@ import { AuthResponseDto } from './dto/auth.response.dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { ITokenUser } from './interfaces';
 import { CurrentUser } from './current-user.decorator';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller({ version: '1', path: 'auth' })
 export class AuthController {
@@ -22,6 +23,7 @@ export class AuthController {
     private readonly userService: UserService,
   ) {}
 
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
   @UseGuards(LocalAuthGuard)
@@ -29,6 +31,7 @@ export class AuthController {
     return await this.authService.logIn(user);
   }
 
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('register')
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseUserDto> {

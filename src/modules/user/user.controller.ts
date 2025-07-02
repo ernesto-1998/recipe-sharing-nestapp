@@ -6,13 +6,11 @@ import {
   Param,
   Patch,
   Delete,
-  UseGuards,
   ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ITokenUser } from '../auth/interfaces';
 import { CurrentUser } from '../auth/current-user.decorator';
 
@@ -20,7 +18,6 @@ import { CurrentUser } from '../auth/current-user.decorator';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
