@@ -10,7 +10,7 @@ import {
   mockUpdatedUser,
   mockUpdateUser,
   mockUpdatedMongoUser,
-} from './mocks';
+} from '../../../common/mocks';
 import { UserService } from '../user.service';
 import { UserRepository } from '../user.repository';
 import { UserMapper } from '../user.mapper';
@@ -39,6 +39,8 @@ describe('UserService', () => {
     findAll: jest.fn(),
     findById: jest.fn(),
     findByUsername: jest.fn(),
+    existsByEmail: jest.fn(),
+    existsByUsername: jest.fn(),
   };
 
   let module: TestingModule;
@@ -86,10 +88,10 @@ describe('UserService', () => {
       expect(userService.checkIfUserExistsByUsername).toHaveBeenCalledWith(
         mockCreateUser.username,
       );
-      expect(bcrypt.hash).toHaveBeenCalledWith(mockCreateUser.passwordHash, 10);
+      expect(bcrypt.hash).toHaveBeenCalledWith(mockCreateUser.password, 10);
       expect(userRepository.create).toHaveBeenCalledWith({
         ...mockCreateUser,
-        passwordHash: hashedPassword,
+        password: hashedPassword,
       });
       expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
       expect(result).toEqual(mockUser);
@@ -147,6 +149,8 @@ describe('UserService', () => {
       (userRepository.updateById as jest.Mock).mockResolvedValue(
         mockUpdatedMongoUser,
       );
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUpdatedUser);
 
       const result: MockResponseUser = await userService.update(
@@ -162,7 +166,52 @@ describe('UserService', () => {
       expect(result).toEqual(mockUpdatedUser);
     });
 
+    it('should throw ConflictException if email already exists', async () => {
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(true);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        userService.update(mockUser._id, mockUpdateUser),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        userService.update(mockUser._id, mockUpdateUser),
+      ).rejects.toThrow('Email is already in use.');
+
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
+        mockUpdateUser.email,
+        mockUser._id,
+      );
+      expect(userRepository.existsByUsername).not.toHaveBeenCalled();
+      expect(userRepository.updateById).not.toHaveBeenCalled();
+      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException if username already exists', async () => {
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(true);
+
+      await expect(
+        userService.update(mockUser._id, mockUpdateUser),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        userService.update(mockUser._id, mockUpdateUser),
+      ).rejects.toThrow('Username is already in use.');
+
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
+        mockUpdateUser.email,
+        mockUser._id,
+      );
+      expect(userRepository.existsByUsername).toHaveBeenCalledWith(
+        mockUpdateUser.username,
+        mockUser._id,
+      );
+      expect(userRepository.updateById).not.toHaveBeenCalled();
+      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+    });
+
     it('should throw NotFoundException if user to update does not exist', async () => {
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (userRepository.updateById as jest.Mock).mockResolvedValue(null);
 
       await expect(
@@ -172,6 +221,14 @@ describe('UserService', () => {
         userService.update(mockUser._id, mockUpdateUser),
       ).rejects.toThrow('User with this ID does not exists.');
 
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
+        mockUpdateUser.email,
+        mockUser._id,
+      );
+      expect(userRepository.existsByUsername).toHaveBeenCalledWith(
+        mockUpdateUser.username,
+        mockUser._id,
+      );
       expect(userRepository.updateById).toHaveBeenCalledWith(
         mockUser._id,
         mockUpdateUser,

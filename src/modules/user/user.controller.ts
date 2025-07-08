@@ -6,35 +6,34 @@ import {
   Param,
   Patch,
   Delete,
-  ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseUserDto } from './dto/response-user.dto';
-import { ITokenUser } from '../auth/interfaces';
-import { CurrentUser } from '../auth/current-user.decorator';
+import { IsOwnerGuard } from 'src/common/guards/is-owner.guard';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller({ version: '1', path: 'users' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Patch(':id')
+  @UseGuards(IsOwnerGuard)
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @CurrentUser() user: ITokenUser,
   ): Promise<ResponseUserDto> {
-    if (user.userId !== id) {
-      throw new ForbiddenException('You can only update your own profile.');
-    }
     return await this.userService.update(id, updateUserDto);
   }
 
+  @UseGuards(IsOwnerGuard)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ResponseUserDto> {
     return await this.userService.remove(id);
   }
 
+  @Public()
   @Get()
   async findAll(): Promise<ResponseUserDto[]> {
     return await this.userService.findAll();

@@ -1,7 +1,7 @@
-import { CreateUserDto } from '../../dto/create-user.dto';
-import { ResponseUserDto } from '../../dto/response-user.dto';
-import { UpdateUserDto } from '../../dto/update-user.dto';
-import { Profile } from '../../schemas/profile.schema';
+import { CreateUserDto } from '../../modules/user/dto/create-user.dto';
+import { ResponseUserDto } from '../../modules/user/dto/response-user.dto';
+import { UpdateUserDto } from '../../modules/user/dto/update-user.dto';
+import { Profile } from '../../modules/user/schemas/profile.schema';
 
 export type MockResponseUser = Omit<ResponseUserDto, 'password'>;
 
@@ -25,6 +25,7 @@ export const mockCreateUser: CreateUserDto = {
 
 export const mockUpdateUser: UpdateUserDto = {
   username: 'updatedUser',
+  email: 'updated@gmail.com',
 };
 
 export const mockUpdatedUser: MockResponseUser = {

@@ -1,5 +1,5 @@
-import { Profile } from '../../schemas/profile.schema';
-import { UserDocument } from '../../schemas/user.schema';
+import { Profile } from '../../modules/user/schemas/profile.schema';
+import { UserDocument } from '../../modules/user/schemas/user.schema';
 import { Types } from 'mongoose';
 
 export const mockMongoUser: UserDocument = {
