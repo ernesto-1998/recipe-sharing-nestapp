@@ -44,28 +44,6 @@ describe('UserController', () => {
     expect(userController).toBeDefined();
   });
 
-  /*   describe('create', () => {
-    it('should create a user and return it', async () => {
-      mockUserService.create.mockResolvedValue(mockUser);
-      const result = await userController.create(mockCreateUser);
-      expect(result).toEqual(mockUser);
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUser);
-    });
-
-    it('should throw ConflictException if user creation fails due to conflict', async () => {
-      mockUserService.create.mockRejectedValue(
-        new ConflictException('User with this email already exists.'),
-      );
-      await expect(userController.create(mockCreateUser)).rejects.toThrow(
-        ConflictException,
-      );
-      await expect(userController.create(mockCreateUser)).rejects.toThrow(
-        'User with this email already exists.',
-      );
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUser);
-    });
-  }); */
-
   describe('update', () => {
     it('should update and return the updated user', async () => {
       mockUserService.update.mockResolvedValue(mockUpdatedUser);

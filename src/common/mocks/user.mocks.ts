@@ -7,7 +7,7 @@ export const mockMongoUser: UserDocument = {
   email: 'robert@example.com',
   username: 'robert123',
   role: 'user',
-  passwordHash: 'hashedPassword',
+  password: 'hashedPassword',
   profile: {} as Profile,
   createdAt: new Date(),
   updatedAt: new Date(),

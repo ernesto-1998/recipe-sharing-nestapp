@@ -7,12 +7,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../user/dto/create-user.dto';
+import { CreateUserDto, ResponseUserDto } from '../user/dto';
 import { UserService } from '../user/user.service';
-import { ResponseUserDto } from '../user/dto/response-user.dto';
-import { AuthResponseDto } from './dto/auth.response.dto';
+import { AuthResponseDto } from './dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ITokenUser } from './interfaces';
+import type { ITokenUser } from './interfaces';
 import { CurrentUser } from './current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
 

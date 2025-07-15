@@ -9,8 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { ResponseUserDto } from './dto/response-user.dto';
+import { UpdateUserDto, ResponseUserDto } from './dto';
 import { IsOwnerGuard } from 'src/common/guards/is-owner.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 

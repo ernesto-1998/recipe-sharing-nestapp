@@ -15,6 +15,11 @@ export const mockUser: MockResponseUser = {
   updatedAt: new Date(),
 };
 
+export const mockLoginUser = {
+  userId: mockUser._id,
+  username: mockUser.username,
+};
+
 export const mockCreateUser: CreateUserDto = {
   email: 'robert@example.com',
   username: 'robert123',
