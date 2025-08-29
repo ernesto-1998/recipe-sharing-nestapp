@@ -14,6 +14,12 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import type { ITokenUser } from './interfaces';
 import { CurrentUser } from './current-user.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 
 @Controller({ version: '1', path: 'auth' })
 export class AuthController {
@@ -25,6 +31,12 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @ApiOperation({ summary: 'Log in to the app.' })
+  @ApiOkResponse({
+    description: 'Successfully Logged in.',
+    type: AuthResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid credentials.' })
   @UseGuards(LocalAuthGuard)
   async login(@CurrentUser() user: ITokenUser): Promise<AuthResponseDto> {
     return await this.authService.logIn(user);
@@ -32,6 +44,12 @@ export class AuthController {
 
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Creates a new user.' })
+  @ApiCreatedResponse({
+    description: 'Successfully created a new user.',
+    type: ResponseUserDto,
+  })
+  @ApiBadRequestResponse({ description: 'Invalid data.' })
   @Post('register')
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseUserDto> {
     return await this.userService.create(createUserDto);

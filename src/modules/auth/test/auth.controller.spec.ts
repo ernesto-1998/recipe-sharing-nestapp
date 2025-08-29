@@ -3,7 +3,7 @@ import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { UserService } from '../../user/user.service';
 import { mockUser, mockLoginUser, mockCreateUser } from '../../../common/mocks';
-import { AuthResponseDto } from '../dto/auth.response.dto';
+import { AuthResponseDto } from '../dto/auth-response.dto';
 import { ConflictException } from '@nestjs/common';
 
 describe('AuthController', () => {

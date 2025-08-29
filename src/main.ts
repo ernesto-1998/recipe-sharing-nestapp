@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { VersioningType, ValidationPipe } from '@nestjs/common';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -19,6 +20,15 @@ async function bootstrap() {
     }),
   );
   app.useGlobalFilters(new GlobalExceptionFilter());
+
+  const config = new DocumentBuilder()
+    .setTitle('Recipes Sharing API')
+    .setDescription('The API for storing, sharing and managing your recipes.')
+    .setVersion('1.0')
+    .addTag('recipes')
+    .build();
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
 
   await app.listen(process.env.APP_PORT ?? 3000);
 }
