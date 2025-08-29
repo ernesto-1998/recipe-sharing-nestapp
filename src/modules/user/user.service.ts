@@ -50,11 +50,11 @@ export class UserService {
       }
     }
     if (updateUserDto?.username) {
-      const emailExists = await this.userRepository.existsByUsername(
+      const usernameExists = await this.userRepository.existsByUsername(
         updateUserDto.username,
         userId,
       );
-      if (emailExists) {
+      if (usernameExists) {
         throw new ConflictException('Username is already in use.');
       }
     }
