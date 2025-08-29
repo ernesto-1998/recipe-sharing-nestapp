@@ -1,6 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { Profile } from '../schemas/profile.schema';
+import { ProfileDto } from './profile.dto';
 
 export class ResponseUserDto {
   @ApiProperty({
@@ -32,11 +32,11 @@ export class ResponseUserDto {
   role: string;
 
   @ApiProperty({
-    type: () => Profile,
+    type: () => ProfileDto,
     description: 'User profile object',
   })
   @Expose()
-  profile: Profile;
+  profile: ProfileDto;
 
   @ApiProperty({
     example: '2025-08-28T10:15:30.000Z',

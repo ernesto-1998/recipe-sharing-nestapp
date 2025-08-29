@@ -1,3 +1,4 @@
+export * from './user.dto';
 export * from './address.dto';
 export * from './coordinates.dto';
 export * from './create-user.dto';
