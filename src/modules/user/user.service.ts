@@ -6,7 +6,7 @@ import {
 import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto, UpdateUserDto, ResponseUserDto } from './dto';
-import { User, UserDocument } from './schemas/user.schema';
+import { UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 import { UserMapper } from './user.mapper';
 
@@ -15,14 +15,14 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
-    const existingUserByEmail: User | null =
-      await this.checkIfUserExistsByEmail(createUserDto.email);
-    const existingUserByUsername: User | null =
-      await this.checkIfUserExistsByUsername(createUserDto.username);
+    const existingUserByEmail: boolean =
+      await this.userRepository.existsByEmail(createUserDto.email);
+    const existingUserByUsername: boolean =
+      await this.userRepository.existsByUsername(createUserDto.username);
 
-    if (existingUserByEmail != null)
+    if (existingUserByEmail)
       throw new ConflictException('User with this email already exists.');
-    if (existingUserByUsername !== null)
+    if (existingUserByUsername)
       throw new ConflictException('User with this username already exists.');
     const hashedPassword: string = await bcrypt.hash(
       createUserDto.password,
@@ -43,7 +43,6 @@ export class UserService {
     if (updateUserDto?.email) {
       const emailExists = await this.userRepository.existsByEmail(
         updateUserDto.email,
-        userId,
       );
       if (emailExists) {
         throw new ConflictException('Email is already in use.');
@@ -52,7 +51,6 @@ export class UserService {
     if (updateUserDto?.username) {
       const usernameExists = await this.userRepository.existsByUsername(
         updateUserDto.username,
-        userId,
       );
       if (usernameExists) {
         throw new ConflictException('Username is already in use.');

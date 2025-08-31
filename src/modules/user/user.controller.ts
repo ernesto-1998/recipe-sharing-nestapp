@@ -1,4 +1,3 @@
-// user.controller.ts
 import {
   Controller,
   Get,
@@ -12,7 +11,13 @@ import { UserService } from './user.service';
 import { UpdateUserDto, ResponseUserDto } from './dto';
 import { IsOwnerGuard } from 'src/common/guards/is-owner.guard';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiConflictResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
+import { ErrorResponseDto } from 'src/common/dto/error-response.dto';
 
 @Controller({ version: '1', path: 'users' })
 export class UserController {
@@ -24,6 +29,14 @@ export class UserController {
   @ApiOkResponse({
     description: 'Successfully retrieved the updated user.',
     type: ResponseUserDto,
+  })
+  @ApiConflictResponse({
+    description: 'Conflict - Email or username already in use.',
+    type: ErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    type: ErrorResponseDto,
   })
   async update(
     @Param('id') id: string,

@@ -68,24 +68,19 @@ describe('UserService', () => {
   });
 
   describe('create', () => {
-    it('should create and return a user when email is not taken', async () => {
-      jest
-        .spyOn(userService, 'checkIfUserExistsByEmail')
-        .mockResolvedValue(null);
-      jest
-        .spyOn(userService, 'checkIfUserExistsByUsername')
-        .mockResolvedValue(null);
-
+    it('should create and return a user when email and username are not taken', async () => {
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       (userRepository.create as jest.Mock).mockResolvedValue(mockMongoUser);
       (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result: MockResponseUser = await userService.create(mockCreateUser);
 
-      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockCreateUser.email,
       );
-      expect(userService.checkIfUserExistsByUsername).toHaveBeenCalledWith(
+      expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockCreateUser.username,
       );
       expect(bcrypt.hash).toHaveBeenCalledWith(mockCreateUser.password, 10);
@@ -98,9 +93,8 @@ describe('UserService', () => {
     });
 
     it('should throw ConflictException when email already exists', async () => {
-      jest
-        .spyOn(userService, 'checkIfUserExistsByEmail')
-        .mockResolvedValue(mockMongoUser);
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(true);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
 
       await expect(userService.create(mockCreateUser)).rejects.toThrow(
         ConflictException,
@@ -109,8 +103,11 @@ describe('UserService', () => {
         'User with this email already exists.',
       );
 
-      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockCreateUser.email,
+      );
+      expect(userRepository.existsByUsername).toHaveBeenCalledWith(
+        mockCreateUser.username,
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
@@ -118,12 +115,8 @@ describe('UserService', () => {
     });
 
     it('should throw ConflictException when username already exists', async () => {
-      jest
-        .spyOn(userService, 'checkIfUserExistsByEmail')
-        .mockResolvedValue(null);
-      jest
-        .spyOn(userService, 'checkIfUserExistsByUsername')
-        .mockResolvedValue(mockMongoUser);
+      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
+      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(true);
 
       await expect(userService.create(mockCreateUser)).rejects.toThrow(
         ConflictException,
@@ -132,10 +125,10 @@ describe('UserService', () => {
         'User with this username already exists.',
       );
 
-      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockCreateUser.email,
       );
-      expect(userService.checkIfUserExistsByUsername).toHaveBeenCalledWith(
+      expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockCreateUser.username,
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
@@ -179,7 +172,6 @@ describe('UserService', () => {
 
       expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockUpdateUser.email,
-        mockUser._id,
       );
       expect(userRepository.existsByUsername).not.toHaveBeenCalled();
       expect(userRepository.updateById).not.toHaveBeenCalled();
@@ -199,11 +191,9 @@ describe('UserService', () => {
 
       expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockUpdateUser.email,
-        mockUser._id,
       );
       expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockUpdateUser.username,
-        mockUser._id,
       );
       expect(userRepository.updateById).not.toHaveBeenCalled();
       expect(UserMapper.toResponse).not.toHaveBeenCalled();
@@ -223,11 +213,9 @@ describe('UserService', () => {
 
       expect(userRepository.existsByEmail).toHaveBeenCalledWith(
         mockUpdateUser.email,
-        mockUser._id,
       );
       expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockUpdateUser.username,
-        mockUser._id,
       );
       expect(userRepository.updateById).toHaveBeenCalledWith(
         mockUser._id,

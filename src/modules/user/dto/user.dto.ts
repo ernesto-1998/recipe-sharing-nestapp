@@ -15,9 +15,8 @@ export class UserDto {
     example: '64c9b2f3e8a1a2b4c56789de',
     description: 'Unique identifier of the user',
   })
-  @IsOptional()
   @IsString()
-  _id?: string;
+  _id: string;
 
   @ApiProperty({
     example: 'user@example.com',
