@@ -13,12 +13,14 @@ import { IsOwnerGuard } from 'src/common/guards/is-owner.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
   ApiConflictResponse,
+  ApiExtraModels,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 import { ErrorResponseDto } from 'src/common/dto/error-response.dto';
 
+@ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -30,13 +32,25 @@ export class UserController {
     description: 'Successfully retrieved the updated user.',
     type: ResponseUserDto,
   })
-  @ApiConflictResponse({
-    description: 'Conflict - Email or username already in use.',
-    type: ErrorResponseDto,
-  })
   @ApiNotFoundResponse({
     description: 'User not found.',
-    type: ErrorResponseDto,
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this ID does not exists.',
+        error: 'Not Found',
+      },
+    },
+  })
+  @ApiConflictResponse({
+    description: 'Email or username already in use.',
+    schema: {
+      example: {
+        statusCode: 409,
+        message: 'Email or username already in use.',
+        error: 'Conflict',
+      },
+    },
   })
   async update(
     @Param('id') id: string,
@@ -50,6 +64,16 @@ export class UserController {
   @ApiOkResponse({
     description: 'Successfully retrieved the deleted user.',
     type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this ID does not exists.',
+        error: 'Not Found',
+      },
+    },
   })
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ResponseUserDto> {
@@ -73,6 +97,16 @@ export class UserController {
     description: 'Successfully retrieved the user by his ID',
     type: ResponseUserDto,
   })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this ID does not exists.',
+        error: 'Not Found',
+      },
+    },
+  })
   @Get(':id')
   async findById(@Param('id') id: string): Promise<ResponseUserDto> {
     return await this.userService.findById(id);
@@ -82,6 +116,16 @@ export class UserController {
   @ApiOkResponse({
     description: 'Successfully retrieved the user by his username',
     type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this username does not exists.',
+        error: 'Not Found',
+      },
+    },
   })
   @Get('username/:username')
   async findByUsername(
@@ -94,6 +138,16 @@ export class UserController {
   @ApiOkResponse({
     description: 'Successfully retrieved the user by his email',
     type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this email does not exists.',
+        error: 'Not Found',
+      },
+    },
   })
   @Get('email/:email')
   async findByEmail(@Param('email') email: string): Promise<ResponseUserDto> {
