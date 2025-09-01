@@ -4,14 +4,14 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
   Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import type { AppLogger } from '../logger/app-logger.interface';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(@Inject(Logger) private readonly logger: Logger) {}
+  constructor(@Inject('AppLogger') private readonly logger: AppLogger) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();

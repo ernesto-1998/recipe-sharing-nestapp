@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
@@ -29,20 +29,23 @@ import { CassandraLogger } from './common/logger/cassandra-logger.service';
   ],
   controllers: [AppController],
   providers: [
+    AppService,
+
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
-    AppService,
-    CassandraLogger,
+
     {
-      provide: Logger,
-      useExisting: CassandraLogger,
+      provide: 'AppLogger',
+      useClass: CassandraLogger,
     },
   ],
+  exports: ['AppLogger'],
 })
 export class AppModule {}

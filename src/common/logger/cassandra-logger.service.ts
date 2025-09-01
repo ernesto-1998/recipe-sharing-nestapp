@@ -1,10 +1,11 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Client, types } from 'cassandra-driver';
 
 import { LogLevel } from '../enums/log-level.enum';
+import { AppLogger } from './app-logger.interface';
 
 @Injectable()
-export class CassandraLogger implements LoggerService {
+export class CassandraLogger implements AppLogger {
   private readonly client: Client;
   private isConnected: boolean = false;
 
@@ -17,41 +18,60 @@ export class CassandraLogger implements LoggerService {
   }
 
   async onModuleInit() {
-    try {
-      await this.client.connect();
-      this.isConnected = true;
-      console.log('Successfully connected to Cassandra.');
-    } catch (err) {
-      this.isConnected = false;
-      console.error('Connection to Cassandra failed.', err);
+    const maxRetries = 10;
+    const delayMs = 5000;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.client.connect();
+        this.isConnected = true;
+        console.log('Successfully connected to Cassandra.');
+        return;
+      } catch (err: unknown) {
+        this.isConnected = false;
+        const errorMsg =
+          err instanceof Error && err?.message.length < 100
+            ? err?.message
+            : 'Cassandra Engine is not ready';
+
+        console.warn(
+          `Cassandra connection attempt ${attempt} failed: ${errorMsg}. Retrying in ${
+            delayMs / 1000
+          }s...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
+
+    console.error(
+      `Failed to connect to Cassandra after ${maxRetries} attempts.`,
+    );
   }
 
-  log(message: any, context?: string) {
+  log(message: unknown, context?: string) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.LOG, formatted, context);
   }
 
-  error(message: any, trace?: string, context?: string) {
+  error(message: unknown, trace?: string, context?: string) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.ERROR, formatted, context, trace);
   }
 
-  warn(message: any, context?: string) {
+  warn(message: unknown, context?: string) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.WARN, formatted, context);
   }
 
-  debug(message: any, context?: string) {
+  debug(message: unknown, context?: string) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.DEBUG, formatted, context);
   }
 
-  verbose(message: any, context?: string) {
+  verbose(message: unknown, context?: string) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.VERBOSE, formatted, context);
