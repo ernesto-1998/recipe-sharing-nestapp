@@ -3,10 +3,10 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { VersioningType, ValidationPipe } from '@nestjs/common';
 
-import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
@@ -19,7 +19,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useGlobalFilters(new GlobalExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Recipes Sharing API')
