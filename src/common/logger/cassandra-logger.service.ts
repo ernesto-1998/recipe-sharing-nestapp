@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Client, types } from 'cassandra-driver';
 
 import { LogLevel } from '../enums/log-level.enum';
-import { AppLogger } from './app-logger.interface';
+import { AppLogger } from '../interfaces/app-logger.interface';
 
 @Injectable()
 export class CassandraLogger implements AppLogger {

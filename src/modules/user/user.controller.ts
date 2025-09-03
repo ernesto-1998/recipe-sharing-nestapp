@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto, ResponseUserDto } from './dto';
-import { IsOwnerGuard } from 'src/common/guards/is-owner.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
   ApiConflictResponse,
@@ -19,6 +18,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { ErrorResponseDto } from 'src/common/dto/error-response.dto';
+import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
@@ -26,7 +26,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Patch(':id')
-  @UseGuards(IsOwnerGuard)
+  @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
   @ApiOkResponse({
     description: 'Successfully retrieved the updated user.',
@@ -59,7 +59,7 @@ export class UserController {
     return await this.userService.update(id, updateUserDto);
   }
 
-  @UseGuards(IsOwnerGuard)
+  @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Delete an user' })
   @ApiOkResponse({
     description: 'Successfully retrieved the deleted user.',
