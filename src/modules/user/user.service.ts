@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
@@ -9,10 +10,14 @@ import { CreateUserDto, UpdateUserDto, ResponseUserDto } from './dto';
 import { UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 import { UserMapper } from './user.mapper';
+import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    @Inject('AppLogger') private readonly logger: AppLogger,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
     const existingUserByEmail: boolean =

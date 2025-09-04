@@ -9,7 +9,7 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
-import { CassandraLogger } from './common/logger/cassandra-logger.service';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -24,28 +24,21 @@ import { CassandraLogger } from './common/logger/cassandra-logger.service';
         dbName: configService.get('MONGO_DATABASE'),
       }),
     }),
+    LoggerModule,
     UserModule,
     AuthModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
     },
-
-    {
-      provide: 'AppLogger',
-      useClass: CassandraLogger,
-    },
   ],
-  exports: ['AppLogger'],
 })
 export class AppModule {}
