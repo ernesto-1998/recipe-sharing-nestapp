@@ -10,10 +10,10 @@ export class CassandraLogger implements AppLogger {
   private isConnected: boolean = false;
 
   constructor() {
-    const { CASSANDRA_HOST } = process.env;
+    const { CASSANDRA_HOST, CASSANDRA_DATACENTER } = process.env;
     this.client = new Client({
       contactPoints: [CASSANDRA_HOST ?? 'localhost'],
-      localDataCenter: 'datacenter1',
+      localDataCenter: CASSANDRA_DATACENTER ?? 'datacenter1',
     });
   }
 
