@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggerModule } from './common/logger/logger.module';
+import { RecipeModule } from './modules/recipe/recipe.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { LoggerModule } from './common/logger/logger.module';
     LoggerModule,
     UserModule,
     AuthModule,
+    RecipeModule,
   ],
   controllers: [AppController],
   providers: [

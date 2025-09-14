@@ -37,7 +37,7 @@
 }
 ```
 
-# Receipe
+# Recipe
 
 ```json
 {
@@ -48,16 +48,22 @@
   "ingredients": [
     {
       "name": "string",
-      "quantity": "string"
+      "quantity": "string",
+      "unit": "kg | gr | onz | pound..."
     }
   ],
-  "steps": ["string"],
+  "steps": [
+    {
+      "order": "number",
+      "instruction": "string"
+    }
+  ],
   "prepTime": "number",
   "portions": "number",
   "category": "string",
   "images": ["string"],
   "tags": ["string"],
-  "published": "boolean",
+  "visibility": "boolean",
   "createdAt": "Date",
   "updatedAt": "Date"
 }

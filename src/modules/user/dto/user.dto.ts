@@ -6,6 +6,7 @@ import {
   MinLength,
   MaxLength,
   ValidateNested,
+  IsMongoId,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProfileDto } from './profile.dto';
@@ -15,7 +16,7 @@ export class UserDto {
     example: '64c9b2f3e8a1a2b4c56789de',
     description: 'Unique identifier of the user',
   })
-  @IsString()
+  @IsMongoId()
   _id: string;
 
   @ApiProperty({
