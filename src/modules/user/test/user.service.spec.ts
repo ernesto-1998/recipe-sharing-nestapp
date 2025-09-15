@@ -13,13 +13,14 @@ import {
 } from '../../../common/mocks';
 import { UserService } from '../user.service';
 import { UserRepository } from '../user.repository';
-import { UserMapper } from '../user.mapper';
 import { UserDocument } from '../schemas/user.schema';
+import { Mapper } from 'src/common/utils/mapper';
+import { ResponseUserDto } from '../dto';
 
 jest.mock('bcrypt');
 
-jest.mock('../user.mapper', () => ({
-  UserMapper: {
+jest.mock('src/common/utils/mapper', () => ({
+  Mapper: {
     toResponse: jest.fn(),
     toResponseMany: jest.fn(),
   },
@@ -43,6 +44,14 @@ describe('UserService', () => {
     existsByUsername: jest.fn(),
   };
 
+  const mockLogger = {
+    log: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    verbose: jest.fn(),
+    debug: jest.fn(),
+  };
+
   let module: TestingModule;
 
   beforeEach(async () => {
@@ -50,6 +59,7 @@ describe('UserService', () => {
       providers: [
         UserService,
         { provide: UserRepository, useValue: mockUserRepository },
+        { provide: 'AppLogger', useValue: mockLogger },
       ],
     }).compile();
 
@@ -73,7 +83,7 @@ describe('UserService', () => {
       (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
       (userRepository.create as jest.Mock).mockResolvedValue(mockMongoUser);
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result: MockResponseUser = await userService.create(mockCreateUser);
 
@@ -88,7 +98,10 @@ describe('UserService', () => {
         ...mockCreateUser,
         password: hashedPassword,
       });
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockMongoUser,
+      );
       expect(result).toEqual(mockUser);
     });
 
@@ -111,7 +124,7 @@ describe('UserService', () => {
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
     it('should throw ConflictException when username already exists', async () => {
@@ -133,7 +146,7 @@ describe('UserService', () => {
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 
@@ -144,7 +157,7 @@ describe('UserService', () => {
       );
       (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
       (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUpdatedUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUpdatedUser);
 
       const result: MockResponseUser = await userService.update(
         mockUser._id,
@@ -155,7 +168,10 @@ describe('UserService', () => {
         mockUser._id,
         mockUpdateUser,
       );
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockUpdatedMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockUpdatedMongoUser,
+      );
       expect(result).toEqual(mockUpdatedUser);
     });
 
@@ -175,7 +191,7 @@ describe('UserService', () => {
       );
       expect(userRepository.existsByUsername).not.toHaveBeenCalled();
       expect(userRepository.updateById).not.toHaveBeenCalled();
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
     it('should throw ConflictException if username already exists', async () => {
@@ -196,7 +212,7 @@ describe('UserService', () => {
         mockUpdateUser.username,
       );
       expect(userRepository.updateById).not.toHaveBeenCalled();
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if user to update does not exist', async () => {
@@ -221,20 +237,23 @@ describe('UserService', () => {
         mockUser._id,
         mockUpdateUser,
       );
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 
   describe('remove', () => {
     it('should remove and return the deleted user', async () => {
       (userRepository.deleteById as jest.Mock).mockResolvedValue(mockMongoUser);
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result = await userService.remove(mockUser._id);
 
       expect(result).toEqual(mockUser);
       expect(userRepository.deleteById).toHaveBeenCalledWith(mockUser._id);
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockMongoUser,
+      );
     });
 
     it('should throw NotFoundException if user to remove does not exist', async () => {
@@ -247,7 +266,7 @@ describe('UserService', () => {
         'User with this ID does not exists.',
       );
       expect(userRepository.deleteById).toHaveBeenCalledWith(mockUser._id);
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 
@@ -255,26 +274,32 @@ describe('UserService', () => {
     it('should return an array of users', async () => {
       const users: UserDocument[] = [mockMongoUser];
       (userRepository.findAll as jest.Mock).mockResolvedValue(users);
-      (UserMapper.toResponseMany as jest.Mock).mockReturnValue([mockUser]);
+      (Mapper.toResponseMany as jest.Mock).mockReturnValue([mockUser]);
 
       const result = await userService.findAll();
 
       expect(result).toEqual([mockUser]);
       expect(userRepository.findAll).toHaveBeenCalled();
-      expect(UserMapper.toResponseMany).toHaveBeenCalledWith(users);
+      expect(Mapper.toResponseMany).toHaveBeenCalledWith(
+        ResponseUserDto,
+        users,
+      );
     });
   });
 
   describe('findById', () => {
     it('should return a user by ID', async () => {
       (userRepository.findById as jest.Mock).mockResolvedValue(mockMongoUser);
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result = await userService.findById(mockUser._id);
 
       expect(result).toEqual(mockUser);
       expect(userRepository.findById).toHaveBeenCalledWith(mockUser._id);
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockMongoUser,
+      );
     });
 
     it('should throw NotFoundException if user is not found by ID', async () => {
@@ -284,7 +309,7 @@ describe('UserService', () => {
         NotFoundException,
       );
       expect(userRepository.findById).toHaveBeenCalledWith(mockUser._id);
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 
@@ -293,7 +318,7 @@ describe('UserService', () => {
       (userRepository.findByUsername as jest.Mock).mockResolvedValue(
         mockMongoUser,
       );
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result = await userService.findByUsername(mockUser.username);
 
@@ -301,7 +326,10 @@ describe('UserService', () => {
       expect(userRepository.findByUsername).toHaveBeenCalledWith(
         mockUser.username,
       );
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockMongoUser,
+      );
     });
 
     it('should throw NotFoundException if user is not found by username', async () => {
@@ -313,7 +341,7 @@ describe('UserService', () => {
       expect(userRepository.findByUsername).toHaveBeenCalledWith(
         mockUser.username,
       );
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 
@@ -322,13 +350,16 @@ describe('UserService', () => {
       (userRepository.findByEmail as jest.Mock).mockResolvedValue(
         mockMongoUser,
       );
-      (UserMapper.toResponse as jest.Mock).mockReturnValue(mockUser);
+      (Mapper.toResponse as jest.Mock).mockReturnValue(mockUser);
 
       const result = await userService.findByEmail(mockUser.email);
 
       expect(result).toEqual(mockUser);
       expect(userRepository.findByEmail).toHaveBeenCalledWith(mockUser.email);
-      expect(UserMapper.toResponse).toHaveBeenCalledWith(mockMongoUser);
+      expect(Mapper.toResponse).toHaveBeenCalledWith(
+        ResponseUserDto,
+        mockMongoUser,
+      );
     });
 
     it('should throw NotFoundException if user is not found by email', async () => {
@@ -338,7 +369,7 @@ describe('UserService', () => {
         NotFoundException,
       );
       expect(userRepository.findByEmail).toHaveBeenCalledWith(mockUser.email);
-      expect(UserMapper.toResponse).not.toHaveBeenCalled();
+      expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
 });

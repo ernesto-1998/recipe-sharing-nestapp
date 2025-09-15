@@ -25,7 +25,6 @@ import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Patch(':id')
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
   @ApiOkResponse({
@@ -52,6 +51,7 @@ export class UserController {
       },
     },
   })
+  @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,

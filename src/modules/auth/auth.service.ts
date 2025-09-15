@@ -10,9 +10,9 @@ import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject('AppLogger') private readonly logger: AppLogger,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    @Inject('AppLogger') private readonly logger: AppLogger,
   ) {}
 
   async validateUser(input: LoginDto): Promise<ITokenUser> {

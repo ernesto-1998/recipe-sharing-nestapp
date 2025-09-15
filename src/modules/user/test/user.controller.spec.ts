@@ -23,12 +23,23 @@ describe('UserController', () => {
     findByEmail: jest.fn(),
   };
 
+  const mockLogger = {
+    log: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    verbose: jest.fn(),
+    debug: jest.fn(),
+  };
+
   let module: TestingModule;
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [{ provide: UserService, useValue: mockUserService }],
+      providers: [
+        { provide: UserService, useValue: mockUserService },
+        { provide: 'AppLogger', useValue: mockLogger },
+      ],
     }).compile();
 
     userController = module.get<UserController>(UserController);

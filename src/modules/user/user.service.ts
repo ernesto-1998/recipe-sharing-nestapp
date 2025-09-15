@@ -9,8 +9,8 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto, UpdateUserDto, ResponseUserDto } from './dto';
 import { UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
-import { UserMapper } from './user.mapper';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
+import { Mapper } from 'src/common/utils/mapper';
 
 @Injectable()
 export class UserService {
@@ -46,7 +46,7 @@ export class UserService {
       },
       UserService.name,
     );
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async update(
@@ -82,7 +82,7 @@ export class UserService {
       },
       UserService.name,
     );
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async remove(userId: string): Promise<ResponseUserDto> {
@@ -96,33 +96,33 @@ export class UserService {
       },
       UserService.name,
     );
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async findAll(): Promise<ResponseUserDto[]> {
     const users = await this.userRepository.findAll();
-    return UserMapper.toResponseMany(users);
+    return Mapper.toResponseMany(ResponseUserDto, users);
   }
 
   async findById(userId: string): Promise<ResponseUserDto> {
     const user = await this.userRepository.findById(userId);
     if (user === null)
       throw new NotFoundException('User with this ID does not exists.');
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async findByUsername(username: string): Promise<ResponseUserDto> {
     const user = await this.userRepository.findByUsername(username);
     if (user === null)
       throw new NotFoundException('User with this username does not exists.');
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async findByEmail(email: string): Promise<ResponseUserDto> {
     const user = await this.userRepository.findByEmail(email);
     if (user === null)
       throw new NotFoundException('User with this email does not exists.');
-    return UserMapper.toResponse(user);
+    return Mapper.toResponse(ResponseUserDto, user);
   }
 
   async checkIfUserExistsByEmail(email: string): Promise<UserDocument | null> {
