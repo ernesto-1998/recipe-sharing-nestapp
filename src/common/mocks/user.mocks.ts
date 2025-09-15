@@ -24,6 +24,5 @@ export const mockMongoUser: UserDocument = {
 
 export const mockUpdatedMongoUser: UserDocument = {
   ...mockMongoUser,
-  _id: new Types.ObjectId('60f7c0e2e2a2c2a4d8e2e2a2'),
   username: 'updatedUser',
 } as unknown as UserDocument;

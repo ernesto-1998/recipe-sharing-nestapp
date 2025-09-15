@@ -98,6 +98,13 @@ describe('UserService', () => {
         ...mockCreateUser,
         password: hashedPassword,
       });
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        {
+          message: 'User created.',
+          userId: mockMongoUser._id,
+        },
+        UserService.name,
+      );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
         mockMongoUser,
@@ -124,6 +131,7 @@ describe('UserService', () => {
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
@@ -146,6 +154,7 @@ describe('UserService', () => {
       );
       expect(bcrypt.hash).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
@@ -167,6 +176,14 @@ describe('UserService', () => {
       expect(userRepository.updateById).toHaveBeenCalledWith(
         mockUser._id,
         mockUpdateUser,
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        {
+          message: 'User updated.',
+          userId: mockUser._id,
+          newValues: mockUpdateUser,
+        },
+        UserService.name,
       );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
@@ -191,6 +208,7 @@ describe('UserService', () => {
       );
       expect(userRepository.existsByUsername).not.toHaveBeenCalled();
       expect(userRepository.updateById).not.toHaveBeenCalled();
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
@@ -212,6 +230,7 @@ describe('UserService', () => {
         mockUpdateUser.username,
       );
       expect(userRepository.updateById).not.toHaveBeenCalled();
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
 
@@ -237,6 +256,7 @@ describe('UserService', () => {
         mockUser._id,
         mockUpdateUser,
       );
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });
@@ -250,6 +270,13 @@ describe('UserService', () => {
 
       expect(result).toEqual(mockUser);
       expect(userRepository.deleteById).toHaveBeenCalledWith(mockUser._id);
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        {
+          message: 'User deleted.',
+          userId: mockUser._id,
+        },
+        UserService.name,
+      );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
         mockMongoUser,
@@ -266,6 +293,7 @@ describe('UserService', () => {
         'User with this ID does not exists.',
       );
       expect(userRepository.deleteById).toHaveBeenCalledWith(mockUser._id);
+      expect(mockLogger.log).not.toHaveBeenCalled();
       expect(Mapper.toResponse).not.toHaveBeenCalled();
     });
   });

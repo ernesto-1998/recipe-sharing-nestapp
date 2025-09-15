@@ -91,7 +91,7 @@ export class UserService {
       throw new NotFoundException('User with this ID does not exists.');
     this.logger.log(
       {
-        message: 'User deleted',
+        message: 'User deleted.',
         userId,
       },
       UserService.name,
