@@ -9,39 +9,37 @@ import {
 import { UserController } from '../user.controller';
 import { UserService } from '../user.service';
 import { NotFoundException } from '@nestjs/common';
+import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
+
+class TestGuard {
+  canActivate() {
+    return true;
+  }
+}
+
+const mockUserService = {
+  create: jest.fn(),
+  update: jest.fn(),
+  remove: jest.fn(),
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  findByUsername: jest.fn(),
+  findByEmail: jest.fn(),
+};
 
 describe('UserController', () => {
   let userController: UserController;
-
-  const mockUserService = {
-    create: jest.fn(),
-    update: jest.fn(),
-    remove: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    findByUsername: jest.fn(),
-    findByEmail: jest.fn(),
-  };
-
-  const mockLogger = {
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    verbose: jest.fn(),
-    debug: jest.fn(),
-  };
 
   let module: TestingModule;
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [
-        { provide: UserService, useValue: mockUserService },
-        { provide: 'AppLogger', useValue: mockLogger },
-      ],
-    }).compile();
-
+      providers: [{ provide: UserService, useValue: mockUserService }],
+    })
+      .overrideGuard(UserOwnerGuard)
+      .useValue(new TestGuard())
+      .compile();
     userController = module.get<UserController>(UserController);
   });
 

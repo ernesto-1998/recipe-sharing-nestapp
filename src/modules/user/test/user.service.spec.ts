@@ -26,31 +26,31 @@ jest.mock('src/common/utils/mapper', () => ({
   },
 }));
 
+const mockUserRepository = {
+  create: jest.fn(),
+  findByEmail: jest.fn(),
+  updateById: jest.fn(),
+  deleteById: jest.fn(),
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  findByUsername: jest.fn(),
+  existsByEmail: jest.fn(),
+  existsByUsername: jest.fn(),
+};
+
+const mockLogger = {
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  verbose: jest.fn(),
+  debug: jest.fn(),
+};
+
 const hashedPassword = 'mockHashedPassword';
 
 describe('UserService', () => {
   let userService: UserService;
   let userRepository: UserRepository;
-
-  const mockUserRepository = {
-    create: jest.fn(),
-    findByEmail: jest.fn(),
-    updateById: jest.fn(),
-    deleteById: jest.fn(),
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    findByUsername: jest.fn(),
-    existsByEmail: jest.fn(),
-    existsByUsername: jest.fn(),
-  };
-
-  const mockLogger = {
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    verbose: jest.fn(),
-    debug: jest.fn(),
-  };
 
   let module: TestingModule;
 

@@ -6,16 +6,16 @@ import { mockUser, mockLoginUser, mockCreateUser } from '../../../common/mocks';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { ConflictException } from '@nestjs/common';
 
+const mockAuthService = {
+  logIn: jest.fn(),
+};
+
+const mockUserService = {
+  create: jest.fn(),
+};
+
 describe('AuthController', () => {
   let authController: AuthController;
-
-  const mockAuthService = {
-    logIn: jest.fn(),
-  };
-
-  const mockUserService = {
-    create: jest.fn(),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
