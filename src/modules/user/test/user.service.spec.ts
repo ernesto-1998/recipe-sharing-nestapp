@@ -10,12 +10,15 @@ import {
   mockUpdatedUser,
   mockUpdateUser,
   mockUpdatedMongoUser,
-} from '../../../common/mocks';
+  mockPaginationInfo,
+  mockPaginatedUsers,
+} from '../../../common/mocks/user';
 import { UserService } from '../user.service';
 import { UserRepository } from '../user.repository';
 import { UserDocument } from '../schemas/user.schema';
 import { Mapper } from 'src/common/utils/mapper';
 import { ResponseUserDto } from '../dto';
+import { buildPaginationInfo } from 'src/common/utils/pagination';
 
 jest.mock('bcrypt');
 
@@ -24,6 +27,10 @@ jest.mock('src/common/utils/mapper', () => ({
     toResponse: jest.fn(),
     toResponseMany: jest.fn(),
   },
+}));
+
+jest.mock('src/common/utils/pagination', () => ({
+  buildPaginationInfo: jest.fn(),
 }));
 
 const mockUserRepository = {
@@ -36,6 +43,7 @@ const mockUserRepository = {
   findByUsername: jest.fn(),
   existsByEmail: jest.fn(),
   existsByUsername: jest.fn(),
+  count: jest.fn(),
 };
 
 const mockLogger = {
@@ -302,16 +310,20 @@ describe('UserService', () => {
     it('should return an array of users', async () => {
       const users: UserDocument[] = [mockMongoUser];
       (userRepository.findAll as jest.Mock).mockResolvedValue(users);
+      (userRepository.count as jest.Mock).mockResolvedValue(1);
       (Mapper.toResponseMany as jest.Mock).mockReturnValue([mockUser]);
+      (buildPaginationInfo as jest.Mock).mockReturnValue(mockPaginationInfo);
 
-      const result = await userService.findAll();
+      const result = await userService.findAll({ page: 1, limit: 10 });
 
-      expect(result).toEqual([mockUser]);
+      expect(result).toEqual(mockPaginatedUsers);
       expect(userRepository.findAll).toHaveBeenCalled();
+      expect(userRepository.count).toHaveBeenCalled();
       expect(Mapper.toResponseMany).toHaveBeenCalledWith(
         ResponseUserDto,
         users,
       );
+      expect(buildPaginationInfo).toHaveBeenCalledWith(1, 1, 10, '/users');
     });
   });
 

@@ -4,7 +4,7 @@ import { UserService } from '../../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UnauthorizedException } from '@nestjs/common';
-import { mockUser, mockMongoUser } from '../../../common/mocks';
+import { mockUser, mockMongoUser } from '../../../common/mocks/user';
 
 jest.mock('bcrypt');
 

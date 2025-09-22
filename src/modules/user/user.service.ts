@@ -6,11 +6,18 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-import { CreateUserDto, UpdateUserDto, ResponseUserDto } from './dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  ResponseUserDto,
+  PaginatedUsersResponseDto,
+} from './dto';
 import { UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { Mapper } from 'src/common/utils/mapper';
+import { buildPaginationInfo } from 'src/common/utils/pagination';
+import { PaginationQueryDto } from 'src/common/dto';
 
 @Injectable()
 export class UserService {
@@ -99,9 +106,21 @@ export class UserService {
     return Mapper.toResponse(ResponseUserDto, user);
   }
 
-  async findAll(): Promise<ResponseUserDto[]> {
-    const users = await this.userRepository.findAll();
-    return Mapper.toResponseMany(ResponseUserDto, users);
+  async findAll({
+    page = 1,
+    limit = 10,
+  }: PaginationQueryDto): Promise<PaginatedUsersResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.userRepository.findAll({ skip, limit }),
+      this.userRepository.count(),
+    ]);
+
+    return {
+      info: buildPaginationInfo(total, page, limit, '/users'),
+      results: Mapper.toResponseMany(ResponseUserDto, users),
+    };
   }
 
   async findById(userId: string): Promise<ResponseUserDto> {

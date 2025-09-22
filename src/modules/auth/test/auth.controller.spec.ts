@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { UserService } from '../../user/user.service';
-import { mockUser, mockLoginUser, mockCreateUser } from '../../../common/mocks';
+import {
+  mockUser,
+  mockLoginUser,
+  mockCreateUser,
+} from '../../../common/mocks/user';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { ConflictException } from '@nestjs/common';
 

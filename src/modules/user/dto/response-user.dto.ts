@@ -7,7 +7,7 @@ export class ResponseUserDto extends OmitType(UserDto, [
   '__v',
 ] as const) {
   @Exclude()
-  password: string;
+  password?: string;
 
   @Exclude()
   __v?: number;

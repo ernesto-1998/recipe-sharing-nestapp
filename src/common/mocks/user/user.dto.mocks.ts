@@ -1,7 +1,10 @@
-import { CreateUserDto } from '../../modules/user/dto/create-user.dto';
-import { ResponseUserDto } from '../../modules/user/dto/response-user.dto';
-import { UpdateUserDto } from '../../modules/user/dto/update-user.dto';
-import { Profile } from '../../modules/user/schemas/profile.schema';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  ResponseUserDto,
+  PaginatedUsersResponseDto,
+} from '../../../modules/user/dto';
+import { Profile } from '../../../modules/user/schemas/profile.schema';
 
 export type MockResponseUser = Omit<ResponseUserDto, 'password'>;
 
@@ -13,6 +16,18 @@ export const mockUser: MockResponseUser = {
   profile: {} as Profile,
   createdAt: new Date(),
   updatedAt: new Date(),
+};
+
+export const mockPaginationInfo = {
+  count: 1,
+  pages: 1,
+  next: null,
+  prev: null,
+};
+
+export const mockPaginatedUsers: PaginatedUsersResponseDto = {
+  info: mockPaginationInfo,
+  results: [mockUser],
 };
 
 export const mockLoginUser = {

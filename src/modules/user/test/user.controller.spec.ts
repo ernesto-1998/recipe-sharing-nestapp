@@ -4,7 +4,8 @@ import {
   MockResponseUser,
   mockUpdatedUser,
   mockUpdateUser,
-} from '../../../common/mocks';
+  mockPaginatedUsers,
+} from '../../../common/mocks/user';
 
 import { UserController } from '../user.controller';
 import { UserService } from '../user.service';
@@ -105,13 +106,11 @@ describe('UserController', () => {
 
   describe('findAll', () => {
     it('should return an array of users', async () => {
-      const users: MockResponseUser[] = [mockUser];
+      mockUserService.findAll.mockResolvedValue(mockPaginatedUsers);
 
-      mockUserService.findAll.mockResolvedValue(users);
+      const result = await userController.findAll({ page: 1, limit: 10 });
 
-      const result = await userController.findAll();
-
-      expect(result).toEqual(users);
+      expect(result).toEqual(mockPaginatedUsers);
       expect(mockUserService.findAll).toHaveBeenCalled();
     });
   });

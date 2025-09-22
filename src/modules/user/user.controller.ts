@@ -6,9 +6,14 @@ import {
   Patch,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UpdateUserDto, ResponseUserDto } from './dto';
+import {
+  UpdateUserDto,
+  ResponseUserDto,
+  PaginatedUsersResponseDto,
+} from './dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
   ApiConflictResponse,
@@ -17,7 +22,7 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { ErrorResponseDto } from 'src/common/dto/error-response.dto';
+import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 
 @ApiExtraModels(ErrorResponseDto)
@@ -81,15 +86,16 @@ export class UserController {
   }
 
   @Public()
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({ summary: 'Get all users (paginated)' })
   @ApiOkResponse({
-    description: 'Successfully retrieved an array of users.',
-    type: ResponseUserDto,
-    isArray: true,
+    description: 'Successfully retrieved users with pagination.',
+    type: PaginatedUsersResponseDto,
   })
   @Get()
-  async findAll(): Promise<ResponseUserDto[]> {
-    return await this.userService.findAll();
+  async findAll(
+    @Query() paginationQuery: PaginationQueryDto,
+  ): Promise<PaginatedUsersResponseDto> {
+    return this.userService.findAll(paginationQuery);
   }
 
   @ApiOperation({ summary: 'Get an user by his ID' })
