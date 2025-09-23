@@ -17,7 +17,7 @@ export class PaginationInfoDto {
   pages: number;
 
   @ApiProperty({
-    example: 'https://api.recipes.com/recipes?page=3',
+    example: 'http://localhost:5000/api/v1/users?page=1&limit=10',
     description:
       'URL to fetch the next page of results, or null if on the last page.',
     nullable: true,
@@ -27,7 +27,7 @@ export class PaginationInfoDto {
   next: string | null;
 
   @ApiProperty({
-    example: 'https://api.recipes.com/recipes?page=1',
+    example: 'http://localhost:5000/api/v1/users?page=2&limit=10',
     description:
       'URL to fetch the previous page of results, or null if on the first page.',
     nullable: true,

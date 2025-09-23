@@ -106,10 +106,10 @@ export class UserService {
     return Mapper.toResponse(ResponseUserDto, user);
   }
 
-  async findAll({
-    page = 1,
-    limit = 10,
-  }: PaginationQueryDto): Promise<PaginatedUsersResponseDto> {
+  async findAll(
+    { page = 1, limit = 10 }: PaginationQueryDto,
+    baseUrl: string,
+  ): Promise<PaginatedUsersResponseDto> {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
@@ -118,7 +118,7 @@ export class UserService {
     ]);
 
     return {
-      info: buildPaginationInfo(total, page, limit, '/users'),
+      info: buildPaginationInfo(total, page, limit, baseUrl),
       results: Mapper.toResponseMany(ResponseUserDto, users),
     };
   }

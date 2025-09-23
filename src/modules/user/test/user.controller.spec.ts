@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   mockUser,
-  MockResponseUser,
   mockUpdatedUser,
   mockUpdateUser,
   mockPaginatedUsers,
@@ -11,6 +10,7 @@ import { UserController } from '../user.controller';
 import { UserService } from '../user.service';
 import { NotFoundException } from '@nestjs/common';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
+import { Request } from 'express';
 
 class TestGuard {
   canActivate() {
@@ -26,6 +26,12 @@ const mockUserService = {
   findById: jest.fn(),
   findByUsername: jest.fn(),
   findByEmail: jest.fn(),
+};
+
+const mockReq: Partial<Request> = {
+  protocol: 'http',
+  get: jest.fn().mockReturnValue('localhost:5000'),
+  baseUrl: '/users',
 };
 
 describe('UserController', () => {
@@ -108,7 +114,10 @@ describe('UserController', () => {
     it('should return an array of users', async () => {
       mockUserService.findAll.mockResolvedValue(mockPaginatedUsers);
 
-      const result = await userController.findAll({ page: 1, limit: 10 });
+      const result = await userController.findAll(
+        { page: 1, limit: 10 },
+        mockReq as Request,
+      );
 
       expect(result).toEqual(mockPaginatedUsers);
       expect(mockUserService.findAll).toHaveBeenCalled();

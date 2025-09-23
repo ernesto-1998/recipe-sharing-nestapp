@@ -7,6 +7,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
+import type { Request } from 'express';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
@@ -94,8 +96,10 @@ export class UserController {
   @Get()
   async findAll(
     @Query() paginationQuery: PaginationQueryDto,
+    @Req() req: Request,
   ): Promise<PaginatedUsersResponseDto> {
-    return this.userService.findAll(paginationQuery);
+    const baseUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
+    return this.userService.findAll(paginationQuery, baseUrl);
   }
 
   @ApiOperation({ summary: 'Get an user by his ID' })

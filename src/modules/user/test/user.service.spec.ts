@@ -311,10 +311,13 @@ describe('UserService', () => {
       const users: UserDocument[] = [mockMongoUser];
       (userRepository.findAll as jest.Mock).mockResolvedValue(users);
       (userRepository.count as jest.Mock).mockResolvedValue(1);
-      (Mapper.toResponseMany as jest.Mock).mockReturnValue([mockUser]);
       (buildPaginationInfo as jest.Mock).mockReturnValue(mockPaginationInfo);
+      (Mapper.toResponseMany as jest.Mock).mockReturnValue([mockUser]);
 
-      const result = await userService.findAll({ page: 1, limit: 10 });
+      const result = await userService.findAll(
+        { page: 1, limit: 10 },
+        'http://localhost:5000/users',
+      );
 
       expect(result).toEqual(mockPaginatedUsers);
       expect(userRepository.findAll).toHaveBeenCalled();
@@ -323,7 +326,12 @@ describe('UserService', () => {
         ResponseUserDto,
         users,
       );
-      expect(buildPaginationInfo).toHaveBeenCalledWith(1, 1, 10, '/users');
+      expect(buildPaginationInfo).toHaveBeenCalledWith(
+        1,
+        1,
+        10,
+        'http://localhost:5000/users',
+      );
     });
   });
 
