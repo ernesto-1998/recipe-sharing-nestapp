@@ -7,6 +7,10 @@ export class PaginatedResponseDto<TData> {
   @Type(() => PaginationInfoDto)
   info: PaginationInfoDto;
 
-  @ApiProperty({ isArray: true })
+  @ApiProperty({
+    description: 'List of results for the current page',
+    isArray: true,
+    type: () => Object,
+  })
   results: TData[];
 }

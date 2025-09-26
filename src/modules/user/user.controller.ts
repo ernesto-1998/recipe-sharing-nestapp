@@ -26,6 +26,7 @@ import {
 import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 import type { Request } from 'express';
+import { ApiOkResponsePaginated } from 'src/common/decorators/api-ok-response-paginated.decorator';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
@@ -68,10 +69,7 @@ export class UserController {
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Delete an user' })
-  @ApiOkResponse({
-    description: 'Successfully retrieved the deleted user.',
-    type: ResponseUserDto,
-  })
+  @ApiOkResponsePaginated(ResponseUserDto)
   @ApiNotFoundResponse({
     description: 'User not found.',
     schema: {
