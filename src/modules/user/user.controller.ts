@@ -69,7 +69,10 @@ export class UserController {
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Delete an user' })
-  @ApiOkResponsePaginated(ResponseUserDto)
+  @ApiOkResponse({
+    description: 'Successfully retrieved the deleted user.',
+    type: ResponseUserDto,
+  })
   @ApiNotFoundResponse({
     description: 'User not found.',
     schema: {
@@ -87,10 +90,7 @@ export class UserController {
 
   @Public()
   @ApiOperation({ summary: 'Get all users (paginated)' })
-  @ApiOkResponse({
-    description: 'Successfully retrieved users with pagination.',
-    type: PaginatedUsersResponseDto,
-  })
+  @ApiOkResponsePaginated(ResponseUserDto)
   @Get()
   async findAll(
     @Query() paginationQuery: PaginationQueryDto,
