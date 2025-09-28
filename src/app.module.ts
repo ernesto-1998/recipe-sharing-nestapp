@@ -11,12 +11,22 @@ import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggerModule } from './common/logger/logger.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: '.env.dev',
       isGlobal: true,
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('RATE_LIMIT_TTL', 60),
+          limit: config.get<number>('RATE_LIMIT_LIMIT', 10),
+        },
+      ],
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
@@ -36,6 +46,10 @@ import { RecipeModule } from './modules/recipe/recipe.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_FILTER,
