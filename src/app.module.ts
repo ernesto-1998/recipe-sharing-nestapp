@@ -23,7 +23,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get<number>('RATE_LIMIT_TTL', 60),
+          ttl: config.get<number>('RATE_LIMIT_TTL', 60000),
           limit: config.get<number>('RATE_LIMIT_LIMIT', 10),
         },
       ],
