@@ -1,13 +1,13 @@
 import { Global, Module } from '@nestjs/common';
-import { CassandraLogger } from './cassandra-logger.service';
+import { PostgresLogger } from './postgres-logger.service';
 
 @Global()
 @Module({
   providers: [
-    CassandraLogger,
+    PostgresLogger,
     {
       provide: 'AppLogger',
-      useExisting: CassandraLogger,
+      useExisting: PostgresLogger,
     },
   ],
   exports: ['AppLogger'],

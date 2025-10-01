@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { LoginDto, AuthResponseDto } from './dto';
 import { UserService } from '../user/user.service';
 
@@ -28,6 +28,7 @@ export class AuthService {
             username: userRes.username,
           },
           AuthService.name,
+          HttpStatus.OK
         );
         return {
           userId: userRes._id.toHexString(),
@@ -41,6 +42,7 @@ export class AuthService {
         email: input.email,
       },
       AuthService.name,
+      HttpStatus.UNAUTHORIZED
     );
     throw new UnauthorizedException('Invalid credentials.');
   }
@@ -58,6 +60,7 @@ export class AuthService {
         userId: user.userId,
       },
       AuthService.name,
+      HttpStatus.OK
     );
     return { accessToken, userId: user.userId, username: user.username };
   }

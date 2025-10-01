@@ -51,8 +51,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         timestamp: new Date().toISOString(),
         path: request.url,
       },
-      exception instanceof Error ? exception.stack : undefined,
       GlobalExceptionFilter.name,
+      status,
+      exception instanceof Error ? exception.stack : undefined,
     );
 
     response.status(status).json({

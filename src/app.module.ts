@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,6 +12,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { LoggerModule } from './common/logger/logger.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggingContextInterceptor } from './common/interceptors/logger-context.interceptor';
 
 @Module({
   imports: [
@@ -50,6 +51,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingContextInterceptor,
     },
     {
       provide: APP_FILTER,

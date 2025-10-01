@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   Inject,
+  HttpStatus,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
@@ -52,6 +53,7 @@ export class UserService {
         userId: user._id,
       },
       UserService.name,
+      HttpStatus.CREATED,
     );
     return Mapper.toResponse(ResponseUserDto, user);
   }
@@ -88,6 +90,7 @@ export class UserService {
         newValues: safeDto,
       },
       UserService.name,
+      HttpStatus.OK,
     );
     return Mapper.toResponse(ResponseUserDto, user);
   }
@@ -102,6 +105,7 @@ export class UserService {
         userId,
       },
       UserService.name,
+      HttpStatus.OK
     );
     return Mapper.toResponse(ResponseUserDto, user);
   }

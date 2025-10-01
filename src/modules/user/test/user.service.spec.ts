@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpStatus, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 import {
@@ -112,6 +112,7 @@ describe('UserService', () => {
           userId: mockMongoUser._id,
         },
         UserService.name,
+        HttpStatus.CREATED,
       );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
@@ -192,6 +193,7 @@ describe('UserService', () => {
           newValues: mockUpdateUser,
         },
         UserService.name,
+        HttpStatus.OK,
       );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
@@ -284,6 +286,7 @@ describe('UserService', () => {
           userId: mockUser._id,
         },
         UserService.name,
+        HttpStatus.OK
       );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,
