@@ -105,7 +105,7 @@ export class UserService {
         userId,
       },
       UserService.name,
-      HttpStatus.OK
+      HttpStatus.OK,
     );
     return Mapper.toResponse(ResponseUserDto, user);
   }

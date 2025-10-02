@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, HttpStatus, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
 import {
@@ -286,7 +290,7 @@ describe('UserService', () => {
           userId: mockUser._id,
         },
         UserService.name,
-        HttpStatus.OK
+        HttpStatus.OK,
       );
       expect(Mapper.toResponse).toHaveBeenCalledWith(
         ResponseUserDto,

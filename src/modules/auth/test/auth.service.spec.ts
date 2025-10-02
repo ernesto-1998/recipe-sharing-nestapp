@@ -54,8 +54,13 @@ describe('AuthService', () => {
 
       const result = await authService.validateUser(input);
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(input.email);
-      expect(bcrypt.compare).toHaveBeenCalledWith(password, mockMongoUser.password);
+      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+        input.email,
+      );
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        password,
+        mockMongoUser.password,
+      );
       expect(mockLogger.log).toHaveBeenCalledWith(
         {
           message: 'User successfully authenticated',
@@ -63,7 +68,7 @@ describe('AuthService', () => {
           username: mockMongoUser.username,
         },
         AuthService.name,
-        HttpStatus.OK
+        HttpStatus.OK,
       );
       expect(result).toEqual({
         userId: mockMongoUser._id.toHexString(),
@@ -75,10 +80,16 @@ describe('AuthService', () => {
       const input = { email: 'notfound@test.com', password: 'any' };
       mockUserService.checkIfUserExistsByEmail.mockResolvedValue(null);
 
-      await expect(authService.validateUser(input)).rejects.toThrow(UnauthorizedException);
-      await expect(authService.validateUser(input)).rejects.toThrow('Invalid credentials.');
+      await expect(authService.validateUser(input)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(authService.validateUser(input)).rejects.toThrow(
+        'Invalid credentials.',
+      );
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(input.email);
+      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+        input.email,
+      );
       expect(bcrypt.compare).not.toHaveBeenCalled();
       expect(mockLogger.warn).toHaveBeenCalledWith(
         {
@@ -86,7 +97,7 @@ describe('AuthService', () => {
           email: input.email,
         },
         AuthService.name,
-        HttpStatus.UNAUTHORIZED
+        HttpStatus.UNAUTHORIZED,
       );
       expect(mockLogger.log).not.toHaveBeenCalled();
     });
@@ -96,18 +107,27 @@ describe('AuthService', () => {
       mockUserService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(authService.validateUser(input)).rejects.toThrow(UnauthorizedException);
-      await expect(authService.validateUser(input)).rejects.toThrow('Invalid credentials.');
+      await expect(authService.validateUser(input)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(authService.validateUser(input)).rejects.toThrow(
+        'Invalid credentials.',
+      );
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(input.email);
-      expect(bcrypt.compare).toHaveBeenCalledWith(input.password, mockMongoUser.password);
+      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+        input.email,
+      );
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        input.password,
+        mockMongoUser.password,
+      );
       expect(mockLogger.warn).toHaveBeenCalledWith(
         {
           message: 'Invalid credentials attempt',
           email: input.email,
         },
         AuthService.name,
-        HttpStatus.UNAUTHORIZED
+        HttpStatus.UNAUTHORIZED,
       );
       expect(mockLogger.log).not.toHaveBeenCalled();
     });
@@ -131,7 +151,7 @@ describe('AuthService', () => {
           userId: user.userId,
         },
         AuthService.name,
-        HttpStatus.OK // 200
+        HttpStatus.OK, // 200
       );
       expect(result).toEqual({
         accessToken: mockToken,

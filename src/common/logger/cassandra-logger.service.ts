@@ -53,7 +53,12 @@ export class CassandraLogger implements AppLogger {
     this.insertLog(LogLevel.LOG, formatted, context);
   }
 
-  error(message: unknown, context?: string, statusCode?: number, trace?: string) {
+  error(
+    message: unknown,
+    context?: string,
+    statusCode?: number,
+    trace?: string,
+  ) {
     const formatted =
       typeof message === 'string' ? message : JSON.stringify(message);
     this.insertLog(LogLevel.ERROR, formatted, context, trace);

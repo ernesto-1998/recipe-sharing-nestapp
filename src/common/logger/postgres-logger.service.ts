@@ -1,20 +1,22 @@
-import { Injectable, Inject, Scope, OnModuleInit } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import type { Request } from 'express';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Client } from 'pg';
-
 import { LogLevel } from '../enums/log-level.enum';
 import { AppLogger } from '../interfaces/app-logger.interface';
-import { ILoggingContext } from '../interfaces/express';
+import { requestContext } from './logger-context.storage';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class PostgresLogger implements AppLogger, OnModuleInit {
   private readonly client: Client;
-  private isConnected: boolean = false;
-  private readonly loggingContext: ILoggingContext | null;
+  private isConnected = false;
 
-  constructor(@Inject(REQUEST) private readonly request: Request) {
-    const { POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB } = process.env;
+  constructor() {
+    const {
+      POSTGRES_HOST,
+      POSTGRES_PORT,
+      POSTGRES_USER,
+      POSTGRES_PASSWORD,
+      POSTGRES_DB,
+    } = process.env;
 
     this.client = new Client({
       host: POSTGRES_HOST ?? 'localhost',
@@ -23,77 +25,101 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
       password: POSTGRES_PASSWORD ?? 'neto',
       database: POSTGRES_DB ?? 'recipe_logs_db',
     });
-
-    this.loggingContext = this.request?.loggingContext || null;
   }
 
   async onModuleInit() {
-    try {
-      await this.client.connect();
-      this.isConnected = true;
-    } catch (err) {
-      this.isConnected = false;
-      console.error('Failed to connect to PostgreSQL:', err);
+    const maxRetries = 10;
+    const delayMs = 5000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.client.connect();
+        this.isConnected = true;
+        console.log('Successfully connected to Postgres.');
+        return;
+      } catch (err: unknown) {
+        this.isConnected = false;
+        const errorMsg =
+          err instanceof Error && err.message.length < 100
+            ? err.message
+            : 'Postgres Engine is not ready';
+        console.warn(
+          `Postgres connection attempt ${attempt} failed: ${errorMsg}. Retrying in ${delayMs / 1000}s...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
     }
+
+    console.error(
+      `Failed to connect to Postgres after ${maxRetries} attempts.`,
+    );
   }
 
   log(message: unknown, context?: string, statusCode?: number) {
-    const formatted = typeof message === 'string' ? message : JSON.stringify(message);
-    this.insertLog(LogLevel.LOG, formatted, context, statusCode);
+    this.insertLog(LogLevel.LOG, message, context, statusCode);
   }
 
-  error(message: unknown, context?: string, statusCode?: number, trace?: string) {
-    const formatted = typeof message === 'string' ? message : JSON.stringify(message);
-    this.insertLog(LogLevel.ERROR, formatted, context, statusCode, trace);
+  error(
+    message: unknown,
+    context?: string,
+    statusCode?: number,
+    trace?: string,
+  ) {
+    this.insertLog(LogLevel.ERROR, message, context, statusCode, trace);
   }
 
   warn(message: unknown, context?: string, statusCode?: number) {
-    const formatted = typeof message === 'string' ? message : JSON.stringify(message);
-    this.insertLog(LogLevel.WARN, formatted, context, statusCode);
+    this.insertLog(LogLevel.WARN, message, context, statusCode);
   }
 
   debug(message: unknown, context?: string, statusCode?: number) {
-    const formatted = typeof message === 'string' ? message : JSON.stringify(message);
-    this.insertLog(LogLevel.DEBUG, formatted, context, statusCode);
+    this.insertLog(LogLevel.DEBUG, message, context, statusCode);
   }
 
   verbose(message: unknown, context?: string, statusCode?: number) {
-    const formatted = typeof message === 'string' ? message : JSON.stringify(message);
-    this.insertLog(LogLevel.VERBOSE, formatted, context, statusCode);
+    this.insertLog(LogLevel.VERBOSE, message, context, statusCode);
   }
 
   private async insertLog(
     level: LogLevel,
-    message: string,
+    message: unknown,
     context?: string,
     statusCode?: number,
-    trace?: string,   
+    trace?: string,
   ) {
     if (!this.isConnected) {
       console.error('Cannot insert log: PostgreSQL client is not connected.');
       return;
     }
-    
 
+    const formattedMessage =
+      typeof message === 'string' ? message : JSON.stringify(message);
+
+    const ctx = requestContext.getStore();
     const query = `
-      INSERT INTO api_logs (
-        level, message, context, created_at,
-        ip_address, url, http_method, status_code, user_id, trace
-      ) VALUES (
-        $1, $2, $3, NOW(),
-        $4, $5, $6, $7, $8, $9
-      );
-    `;
+    INSERT INTO api_logs (
+      level, message, context, created_at,
+      ip_address, host, full_url, path,
+      http_method, status_code, protocol, user_id, trace
+    ) VALUES (
+      $1, $2, $3, NOW(),
+      $4, $5, $6, $7,
+      $8, $9, $10, $11, $12
+    );
+  `;
 
     const params = [
       level,
-      message,
+      formattedMessage,
       context || null,
-      this.loggingContext?.ip_address || null,
-      this.loggingContext?.url || null,
-      this.loggingContext?.http_method || null,
+      ctx?.ip_address || null,
+      ctx?.host || null,
+      ctx?.full_url || null,
+      ctx?.path || null,
+      ctx?.http_method || null,
       statusCode || null,
-      this.loggingContext?.user_id || null,
+      ctx?.protocol || null,
+      ctx?.user_id || null,
       trace || null,
     ];
 
