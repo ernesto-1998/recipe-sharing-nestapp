@@ -11,13 +11,14 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ITokenPayload, ITokenUser } from './interfaces/';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
+import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-    @Inject('AppLogger') private readonly logger: AppLogger,
+    @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
   ) {}
 
   async validateUser(input: LoginDto): Promise<ITokenUser> {

@@ -8,10 +8,13 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import type { AppLogger } from '../interfaces/app-logger.interface';
+import { CustomToken } from '../enums/custom-tokens-providers.enum';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  constructor(@Inject('AppLogger') private readonly logger: AppLogger) {}
+  constructor(
+    @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -42,15 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     this.logger.error(
-      {
-        method: request.method,
-        url: request.url,
-        statusCode: status,
-        error,
-        message,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      },
+      message,
       GlobalExceptionFilter.name,
       status,
       exception instanceof Error ? exception.stack : undefined,

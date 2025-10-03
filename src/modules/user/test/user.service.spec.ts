@@ -23,6 +23,7 @@ import { UserDocument } from '../schemas/user.schema';
 import { Mapper } from 'src/common/utils/mapper';
 import { ResponseUserDto } from '../dto';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
+import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 
 jest.mock('bcrypt');
 
@@ -71,7 +72,7 @@ describe('UserService', () => {
       providers: [
         UserService,
         { provide: UserRepository, useValue: mockUserRepository },
-        { provide: 'AppLogger', useValue: mockLogger },
+        { provide: CustomToken.APP_LOGGER, useValue: mockLogger },
       ],
     }).compile();
 

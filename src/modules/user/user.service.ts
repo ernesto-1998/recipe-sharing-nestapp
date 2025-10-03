@@ -19,12 +19,13 @@ import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { Mapper } from 'src/common/utils/mapper';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
 import { PaginationQueryDto } from 'src/common/dto';
+import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject('AppLogger') private readonly logger: AppLogger,
+    @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {

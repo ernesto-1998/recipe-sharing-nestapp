@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { HttpStatus, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { mockUser, mockMongoUser } from '../../../common/mocks/user';
+import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 
 jest.mock('bcrypt');
 
@@ -33,7 +34,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: UserService, useValue: mockUserService },
         { provide: JwtService, useValue: mockJwtService },
-        { provide: 'AppLogger', useValue: mockLogger },
+        { provide: CustomToken.APP_LOGGER, useValue: mockLogger },
       ],
     }).compile();
 

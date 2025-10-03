@@ -1,15 +1,20 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { Client } from 'pg';
 import { LogLevel } from '../enums/log-level.enum';
 import { AppLogger } from '../interfaces/app-logger.interface';
-import { requestContext } from './logger-context.storage';
+import { CustomToken } from '../enums/custom-tokens-providers.enum';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { ILoggingContext } from '../interfaces';
 
 @Injectable()
 export class PostgresLogger implements AppLogger, OnModuleInit {
   private readonly client: Client;
   private isConnected = false;
 
-  constructor() {
+  constructor(
+    @Inject(CustomToken.LOGGER_CONTEXT_STORE)
+    private readonly asyncLocalStorage: AsyncLocalStorage<ILoggingContext>,
+  ) {
     const {
       POSTGRES_HOST,
       POSTGRES_PORT,
@@ -95,7 +100,7 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message);
 
-    const ctx = requestContext.getStore();
+    const ctx = this.asyncLocalStorage.getStore();
     const query = `
     INSERT INTO api_logs (
       level, message, context, created_at,

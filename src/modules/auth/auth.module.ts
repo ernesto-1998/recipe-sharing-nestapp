@@ -7,9 +7,11 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
+import { LoggerContextModule } from 'src/common/logger/logger-context.module';
 
 @Module({
   imports: [
+    LoggerContextModule,
     UserModule,
     PassportModule,
     JwtModule.registerAsync({

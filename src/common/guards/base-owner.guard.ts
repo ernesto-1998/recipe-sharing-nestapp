@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpStatus,
   Inject,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,9 +11,10 @@ import { Request } from 'express';
 import type { IGenericService } from '../interfaces/generic-service.interface';
 import { Types } from 'mongoose';
 import type { AppLogger } from '../interfaces/app-logger.interface';
+import { CustomToken } from '../enums/custom-tokens-providers.enum';
 
 export abstract class BaseOwnerGuard implements CanActivate {
-  @Inject('AppLogger') protected readonly logger: AppLogger;
+  @Inject(CustomToken.APP_LOGGER) protected readonly logger: AppLogger;
 
   constructor(
     protected readonly service: IGenericService,
@@ -33,6 +35,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
           userId: user?.userId,
         },
         contextName,
+        HttpStatus.FORBIDDEN,
       );
       throw new ForbiddenException('Missing user or resource ID.');
     }
@@ -46,6 +49,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
           userId: user.userId,
         },
         contextName,
+        HttpStatus.NOT_FOUND,
       );
       throw new NotFoundException('Resource not found.');
     }
@@ -66,6 +70,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
           ownerId: resourceOwnerId,
         },
         contextName,
+        HttpStatus.FORBIDDEN,
       );
       throw new ForbiddenException('You do not own this resource.');
     }
@@ -77,6 +82,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
         userId: user.userId,
       },
       contextName,
+      HttpStatus.OK,
     );
 
     return true;

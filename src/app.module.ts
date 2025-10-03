@@ -18,6 +18,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerContextMiddleware } from './common/middlewares/logger-context.middleware';
+import { LoggerContextModule } from './common/logger/logger-context.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { LoggerContextMiddleware } from './common/middlewares/logger-context.mid
       }),
     }),
     LoggerModule,
+    LoggerContextModule,
     UserModule,
     AuthModule,
     RecipeModule,
@@ -65,8 +67,6 @@ import { LoggerContextMiddleware } from './common/middlewares/logger-context.mid
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LoggerContextMiddleware)
-      .forRoutes({ path: '/*', method: RequestMethod.ALL });
+    consumer.apply(LoggerContextMiddleware).forRoutes('*path');
   }
 }
