@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { PostgresLogger } from './postgres-logger.service';
-import { LoggerContextModule } from './logger-context.module';
+import { LoggerContextModule } from './context/logger-context.module';
 import { CustomToken } from '../enums/custom-tokens-providers.enum';
 
 @Global()

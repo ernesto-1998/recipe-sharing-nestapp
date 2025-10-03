@@ -24,7 +24,7 @@ async function bootstrap() {
     .setTitle('Recipes Sharing API')
     .setDescription('The API for storing, sharing and managing your recipes.')
     .setVersion('1.0')
-    .addTag('recipes')
+    .addTag('Recipes')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);

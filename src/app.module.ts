@@ -1,9 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
@@ -18,7 +13,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerContextMiddleware } from './common/middlewares/logger-context.middleware';
-import { LoggerContextModule } from './common/logger/logger-context.module';
+import { LoggerContextModule } from './common/logger/context/logger-context.module';
 
 @Module({
   imports: [
