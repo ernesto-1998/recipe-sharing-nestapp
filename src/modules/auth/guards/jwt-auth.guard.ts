@@ -1,15 +1,14 @@
 import { Injectable, Inject, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { RequestContextService } from 'src/common/context/request-context.service';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
-import { LoggerContextService } from 'src/common/logger/context/logger-context.service';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     private reflector: Reflector,
-    private readonly loggerCtx: LoggerContextService,
+    private readonly requestCtx: RequestContextService,
   ) {
     super();
   }
@@ -28,7 +27,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
     if (result) {
       const request = context.switchToHttp().getRequest();
-      this.loggerCtx.setProperty('user_id', request.user?.userId ?? null);
+      this.requestCtx.setProperty('user_id', request.user?.userId ?? null);
     }
 
     return result;

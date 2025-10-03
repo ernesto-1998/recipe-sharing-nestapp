@@ -11,6 +11,7 @@ import { UserService } from '../user.service';
 import { NotFoundException } from '@nestjs/common';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 import { Request } from 'express';
+import { RequestContextService } from 'src/common/context/request-context.service';
 
 class TestGuard {
   canActivate() {
@@ -28,10 +29,13 @@ const mockUserService = {
   findByEmail: jest.fn(),
 };
 
-const mockReq: Partial<Request> = {
-  protocol: 'http',
-  get: jest.fn().mockReturnValue('localhost:5000'),
-  baseUrl: '/users',
+const mockRequestContextService = {
+  getContext: jest.fn().mockReturnValue({
+    full_url: 'http://localhost:5000/users',
+    protocol: 'http',
+    host: 'localhost:5000',
+    path: '/users',
+  }),
 };
 
 describe('UserController', () => {
@@ -42,7 +46,10 @@ describe('UserController', () => {
   beforeEach(async () => {
     module = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [{ provide: UserService, useValue: mockUserService }],
+      providers: [
+        { provide: UserService, useValue: mockUserService },
+        { provide: RequestContextService, useValue: mockRequestContextService },
+      ],
     })
       .overrideGuard(UserOwnerGuard)
       .useValue(new TestGuard())
@@ -114,13 +121,11 @@ describe('UserController', () => {
     it('should return an array of users', async () => {
       mockUserService.findAll.mockResolvedValue(mockPaginatedUsers);
 
-      const result = await userController.findAll(
-        { page: 1, limit: 10 },
-        mockReq as Request,
-      );
+      const result = await userController.findAll({ page: 1, limit: 10 });
 
       expect(result).toEqual(mockPaginatedUsers);
       expect(mockUserService.findAll).toHaveBeenCalled();
+      expect(mockRequestContextService.getContext).toHaveBeenCalled();
     });
   });
 

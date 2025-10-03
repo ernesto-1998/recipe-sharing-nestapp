@@ -1,11 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { PostgresLogger } from './postgres-logger.service';
-import { LoggerContextModule } from './context/logger-context.module';
 import { CustomToken } from '../enums/custom-tokens-providers.enum';
+import { RequestContextModule } from '../context/request-context.module';
 
 @Global()
 @Module({
-  imports: [LoggerContextModule],
   providers: [
     PostgresLogger,
     {

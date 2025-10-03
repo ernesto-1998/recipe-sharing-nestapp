@@ -25,13 +25,16 @@ import {
 } from '@nestjs/swagger';
 import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
-import type { Request } from 'express';
 import { ApiOkResponsePaginated } from 'src/common/decorators/api-ok-response-paginated.decorator';
+import { RequestContextService } from 'src/common/context/request-context.service';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly requestCxt: RequestContextService,
+    private readonly userService: UserService,
+  ) {}
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
@@ -94,9 +97,8 @@ export class UserController {
   @Get()
   async findAll(
     @Query() paginationQuery: PaginationQueryDto,
-    @Req() req: Request,
   ): Promise<PaginatedUsersResponseDto> {
-    const baseUrl = `${req.protocol}://${req.get('host')}${req.baseUrl}`;
+    const baseUrl = this.requestCxt.getContext()?.full_url || '';
     return this.userService.findAll(paginationQuery, baseUrl);
   }
 

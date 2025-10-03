@@ -2,15 +2,15 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Client } from 'pg';
 import { LogLevel } from '../enums/log-level.enum';
 import { AppLogger } from '../interfaces/app-logger.interface';
-import { ILoggingContext } from '../interfaces';
-import { LoggerContextService } from './context/logger-context.service';
+import { RequestContextService } from '../context/request-context.service';
+import { IRequestContext } from '../context/interfaces/request-context.interface';
 
 @Injectable()
 export class PostgresLogger implements AppLogger, OnModuleInit {
   private readonly client: Client;
   private isConnected = false;
 
-  constructor(private readonly loggerCtx: LoggerContextService) {
+  constructor(private readonly requestCtx: RequestContextService) {
     const {
       POSTGRES_HOST,
       POSTGRES_PORT,
@@ -95,7 +95,7 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
 
     const formattedMessage =
       typeof message === 'string' ? message : JSON.stringify(message);
-    const ctx: ILoggingContext | undefined = this.loggerCtx.getContext(); // 👈 usamos el servicio
+    const ctx: IRequestContext | undefined = this.requestCtx.getContext();
 
     const query = `
       INSERT INTO api_logs (

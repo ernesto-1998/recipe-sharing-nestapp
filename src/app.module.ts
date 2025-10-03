@@ -12,8 +12,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { LoggerModule } from './common/logger/logger.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { LoggerContextMiddleware } from './common/middlewares/logger-context.middleware';
-import { LoggerContextModule } from './common/logger/context/logger-context.module';
+import { RequestContextMiddleware } from './common/context/request-context.middleware';
+import { RequestContextModule } from './common/context/request-context.module';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { LoggerContextModule } from './common/logger/context/logger-context.modu
       useFactory: (config: ConfigService) => [
         {
           ttl: config.get<number>('RATE_LIMIT_TTL', 60000),
-          limit: config.get<number>('RATE_LIMIT_LIMIT', 10),
+          limit: config.get<number>('RATE_LIMIT_LIMIT', 100),
         },
       ],
     }),
@@ -38,7 +38,7 @@ import { LoggerContextModule } from './common/logger/context/logger-context.modu
       }),
     }),
     LoggerModule,
-    LoggerContextModule,
+    RequestContextModule,
     UserModule,
     AuthModule,
     RecipeModule,
@@ -62,6 +62,6 @@ import { LoggerContextModule } from './common/logger/context/logger-context.modu
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LoggerContextMiddleware).forRoutes('*path');
+    consumer.apply(RequestContextMiddleware).forRoutes('*path');
   }
 }

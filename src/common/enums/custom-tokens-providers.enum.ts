@@ -1,4 +1,4 @@
 export enum CustomToken {
-  LOGGER_CONTEXT_STORE = 'LOGGER_CONTEXT',
+  REQUEST_CONTEXT_STORE = 'REQUEST_CONTEXT',
   APP_LOGGER = 'AppLogger',
 }

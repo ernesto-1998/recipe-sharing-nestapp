@@ -1,17 +1,17 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import type { ILoggingContext } from '../interfaces';
-import { LoggerContextService } from '../logger/context/logger-context.service';
+import { RequestContextService } from './request-context.service';
+import { IRequestContext } from './interfaces/request-context.interface';
 
 @Injectable()
-export class LoggerContextMiddleware implements NestMiddleware {
-  constructor(private readonly loggerCtx: LoggerContextService) {}
+export class RequestContextMiddleware implements NestMiddleware {
+  constructor(private readonly requestCtx: RequestContextService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
     const protocol = req?.protocol || null;
     const host = req.get('host');
 
-    const ctx: ILoggingContext = {
+    const ctx: IRequestContext = {
       ip_address: req.ip || null,
       host: host || null,
       full_url: `${protocol}://${host}${req.originalUrl}`,
@@ -21,6 +21,6 @@ export class LoggerContextMiddleware implements NestMiddleware {
       user_id: null,
     };
 
-    this.loggerCtx.runWithContext(ctx, () => next());
+    this.requestCtx.runWithContext(ctx, () => next());
   }
 }

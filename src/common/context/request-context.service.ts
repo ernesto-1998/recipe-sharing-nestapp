@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
-import { ILoggingContext } from 'src/common/interfaces';
+import { IRequestContext } from './interfaces/request-context.interface';
 
 @Injectable()
-export class LoggerContextService {
+export class RequestContextService {
   constructor(
-    @Inject(CustomToken.LOGGER_CONTEXT_STORE)
-    private readonly asyncLocalStorage: AsyncLocalStorage<ILoggingContext>,
+    @Inject(CustomToken.REQUEST_CONTEXT_STORE)
+    private readonly asyncLocalStorage: AsyncLocalStorage<IRequestContext>,
   ) {}
 
-  getContext(): ILoggingContext | undefined {
+  getContext(): IRequestContext | undefined {
     return this.asyncLocalStorage.getStore();
   }
 
@@ -18,9 +18,9 @@ export class LoggerContextService {
     return this.asyncLocalStorage.getStore()?.user_id ?? null;
   }
 
-  setProperty<K extends keyof ILoggingContext>(
+  setProperty<K extends keyof IRequestContext>(
     key: K,
-    value: ILoggingContext[K],
+    value: IRequestContext[K],
   ) {
     const ctx = this.getContext();
     if (ctx) {
@@ -28,7 +28,7 @@ export class LoggerContextService {
     }
   }
 
-  runWithContext(ctx: ILoggingContext, fn: () => void) {
+  runWithContext(ctx: IRequestContext, fn: () => void) {
     this.asyncLocalStorage.run(ctx, fn);
   }
 }

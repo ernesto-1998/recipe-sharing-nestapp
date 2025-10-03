@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-export interface ILoggingContext {
+export interface IRequestContext {
   ip_address: string | null;
   path: string | null;
   http_method: string | null;
@@ -8,12 +8,4 @@ export interface ILoggingContext {
   host: string | null;
   full_url: string | null;
   protocol: string | null;
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      loggingContext?: ILoggingContext;
-    }
-  }
 }
