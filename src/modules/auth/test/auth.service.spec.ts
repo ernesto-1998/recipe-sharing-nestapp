@@ -6,6 +6,7 @@ import { HttpStatus, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { mockUser, mockMongoUser } from '../../../common/mocks/user';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
+import { AppLogger } from 'src/common/interfaces';
 
 jest.mock('bcrypt');
 
@@ -17,7 +18,7 @@ const mockJwtService = {
   signAsync: jest.fn(),
 };
 
-const mockLogger = {
+const mockLogger: Partial<AppLogger> = {
   log: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),

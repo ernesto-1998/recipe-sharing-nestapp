@@ -24,6 +24,7 @@ import { Mapper } from 'src/common/utils/mapper';
 import { ResponseUserDto } from '../dto';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
+import { AppLogger } from 'src/common/interfaces';
 
 jest.mock('bcrypt');
 
@@ -51,7 +52,7 @@ const mockUserRepository = {
   count: jest.fn(),
 };
 
-const mockLogger = {
+const mockLogger: Partial<AppLogger> = {
   log: jest.fn(),
   warn: jest.fn(),
   error: jest.fn(),

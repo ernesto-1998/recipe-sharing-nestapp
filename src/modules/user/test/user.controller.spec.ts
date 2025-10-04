@@ -29,7 +29,7 @@ const mockUserService = {
   findByEmail: jest.fn(),
 };
 
-const mockRequestContextService = {
+const mockRequestContextService: Partial<RequestContextService> = {
   getContext: jest.fn().mockReturnValue({
     full_url: 'http://localhost:5000/users',
     protocol: 'http',
