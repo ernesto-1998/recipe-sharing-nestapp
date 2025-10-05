@@ -7,6 +7,7 @@ import {
   MaxLength,
   ValidateNested,
   IsMongoId,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProfileDto } from './profile.dto';
@@ -39,12 +40,16 @@ export class UserDto {
     maxLength: 20,
     description: 'Password of the user (min 8, max 20 characters)',
   })
+  @IsOptional()
   @IsString()
   @MinLength(8, { message: 'The min length of password is 8' })
   @MaxLength(20, {
     message: 'The password can not accept more than 20 characters',
   })
-  password: string;
+  password?: string;
+
+  @IsBoolean()
+  isOAuthUser: boolean;
 
   @ApiProperty({
     example: 'admin',
