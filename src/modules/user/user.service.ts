@@ -63,14 +63,6 @@ export class UserService {
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<ResponseUserDto> {
-    if (updateUserDto?.email) {
-      const emailExists = await this.userRepository.existsByEmail(
-        updateUserDto.email,
-      );
-      if (emailExists) {
-        throw new ConflictException('Email is already in use.');
-      }
-    }
     if (updateUserDto?.username) {
       const usernameExists = await this.userRepository.existsByUsername(
         updateUserDto.username,
@@ -83,12 +75,11 @@ export class UserService {
     if (user === null)
       throw new NotFoundException('User with this ID does not exists.');
 
-    const { password: _password, ...safeDto } = updateUserDto ?? {};
     this.logger.log(
       {
         message: 'User updated.',
         userId,
-        newValues: safeDto,
+        newValues: updateUserDto,
       },
       UserService.name,
       HttpStatus.OK,

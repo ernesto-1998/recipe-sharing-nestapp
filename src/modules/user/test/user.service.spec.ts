@@ -179,7 +179,6 @@ describe('UserService', () => {
       (userRepository.updateById as jest.Mock).mockResolvedValue(
         mockUpdatedMongoUser,
       );
-      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
       (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (Mapper.toResponse as jest.Mock).mockReturnValue(mockUpdatedUser);
 
@@ -208,28 +207,7 @@ describe('UserService', () => {
       expect(result).toEqual(mockUpdatedUser);
     });
 
-    it('should throw ConflictException if email already exists', async () => {
-      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(true);
-      (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
-
-      await expect(
-        userService.update(mockUser._id, mockUpdateUser),
-      ).rejects.toThrow(ConflictException);
-      await expect(
-        userService.update(mockUser._id, mockUpdateUser),
-      ).rejects.toThrow('Email is already in use.');
-
-      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
-        mockUpdateUser.email,
-      );
-      expect(userRepository.existsByUsername).not.toHaveBeenCalled();
-      expect(userRepository.updateById).not.toHaveBeenCalled();
-      expect(mockLogger.log).not.toHaveBeenCalled();
-      expect(Mapper.toResponse).not.toHaveBeenCalled();
-    });
-
     it('should throw ConflictException if username already exists', async () => {
-      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
       (userRepository.existsByUsername as jest.Mock).mockResolvedValue(true);
 
       await expect(
@@ -239,9 +217,6 @@ describe('UserService', () => {
         userService.update(mockUser._id, mockUpdateUser),
       ).rejects.toThrow('Username is already in use.');
 
-      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
-        mockUpdateUser.email,
-      );
       expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockUpdateUser.username,
       );
@@ -251,7 +226,6 @@ describe('UserService', () => {
     });
 
     it('should throw NotFoundException if user to update does not exist', async () => {
-      (userRepository.existsByEmail as jest.Mock).mockResolvedValue(false);
       (userRepository.existsByUsername as jest.Mock).mockResolvedValue(false);
       (userRepository.updateById as jest.Mock).mockResolvedValue(null);
 
@@ -262,9 +236,6 @@ describe('UserService', () => {
         userService.update(mockUser._id, mockUpdateUser),
       ).rejects.toThrow('User with this ID does not exists.');
 
-      expect(userRepository.existsByEmail).toHaveBeenCalledWith(
-        mockUpdateUser.email,
-      );
       expect(userRepository.existsByUsername).toHaveBeenCalledWith(
         mockUpdateUser.username,
       );
