@@ -3,12 +3,13 @@ import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { UserService } from '../../user/user.service';
 import {
-  mockUser,
+  mockResponseUser,
   mockLoginUser,
   mockCreateUser,
 } from '../../../common/mocks/user';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { ConflictException } from '@nestjs/common';
+import { LoginDto } from '../dto';
 
 const mockAuthService = {
   logIn: jest.fn(),
@@ -41,12 +42,16 @@ describe('AuthController', () => {
     it('should return a token when login is successful', async () => {
       const mockResponse: AuthResponseDto = {
         accessToken: 'mock.token.value',
-        userId: mockUser._id,
-        username: mockUser.username,
+        userId: mockResponseUser._id,
+        username: mockResponseUser.username,
+      };
+      const mockLoginBody: LoginDto = {
+        email: mockCreateUser.email,
+        password: mockCreateUser.password,
       };
       mockAuthService.logIn.mockResolvedValue(mockResponse);
 
-      const result = await authController.login(mockLoginUser);
+      const result = await authController.login(mockLoginBody, mockLoginUser);
 
       expect(mockAuthService.logIn).toHaveBeenCalledWith(mockLoginUser);
       expect(result).toEqual(mockResponse);
@@ -55,9 +60,9 @@ describe('AuthController', () => {
 
   describe('create (register)', () => {
     it('should create a user and return it', async () => {
-      mockUserService.create.mockResolvedValue(mockUser);
+      mockUserService.create.mockResolvedValue(mockResponseUser);
       const result = await authController.create(mockCreateUser);
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(mockResponseUser);
       expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUser);
     });
 

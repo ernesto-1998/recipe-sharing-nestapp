@@ -9,7 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import { CreateUserDto, ResponseUserDto } from '../user/dto';
 import { UserService } from '../user/user.service';
-import { AuthResponseDto } from './dto';
+import { AuthResponseDto, LoginDto } from './dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import type { ITokenUser } from './interfaces';
 import { CurrentUser } from './current-user.decorator';
@@ -38,7 +38,10 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: 'Invalid credentials.' })
   @UseGuards(LocalAuthGuard)
-  async login(@CurrentUser() user: ITokenUser): Promise<AuthResponseDto> {
+  async login(
+    @Body() loginDto: LoginDto,
+    @CurrentUser() user: ITokenUser,
+  ): Promise<AuthResponseDto> {
     return await this.authService.logIn(user);
   }
 

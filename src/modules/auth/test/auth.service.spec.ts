@@ -4,7 +4,7 @@ import { UserService } from '../../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { HttpStatus, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { mockUser, mockMongoUser } from '../../../common/mocks/user';
+import { mockResponseUser, mockMongoUser } from '../../../common/mocks/user';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 import { AppLogger } from 'src/common/interfaces';
 
@@ -49,7 +49,7 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('should return user when email exists and password matches', async () => {
       const password = 'plainPassword';
-      const input = { email: mockUser.email, password };
+      const input = { email: mockResponseUser.email, password };
 
       mockUserService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
@@ -140,7 +140,10 @@ describe('AuthService', () => {
       const mockToken = 'mock.jwt.token';
       mockJwtService.signAsync.mockResolvedValue(mockToken);
 
-      const user = { userId: mockUser._id, username: mockUser.username };
+      const user = {
+        userId: mockResponseUser._id,
+        username: mockResponseUser.username,
+      };
       const result = await authService.logIn(user);
 
       expect(mockJwtService.signAsync).toHaveBeenCalledWith({

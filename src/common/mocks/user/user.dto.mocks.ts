@@ -8,7 +8,7 @@ import { Profile } from '../../../modules/user/schemas/profile.schema';
 
 export type MockResponseUser = Omit<ResponseUserDto, 'password'>;
 
-export const mockUser: MockResponseUser = {
+export const mockResponseUser: MockResponseUser = {
   _id: '60f7c0e2e2a2c2a4d8e2e2a2',
   email: 'robert@example.com',
   username: 'robert123',
@@ -27,12 +27,12 @@ export const mockPaginationInfo = {
 
 export const mockPaginatedUsers: PaginatedUsersResponseDto = {
   info: mockPaginationInfo,
-  results: [mockUser],
+  results: [mockResponseUser],
 };
 
 export const mockLoginUser = {
-  userId: mockUser._id,
-  username: mockUser.username,
+  userId: mockResponseUser._id,
+  username: mockResponseUser.username,
 };
 
 export const mockCreateUser: CreateUserDto = {
@@ -45,10 +45,9 @@ export const mockCreateUser: CreateUserDto = {
 
 export const mockUpdateUser: UpdateUserDto = {
   username: 'updatedUser',
-  email: 'updated@gmail.com',
 };
 
 export const mockUpdatedUser: MockResponseUser = {
-  ...mockUser,
+  ...mockResponseUser,
   username: 'updatedUser',
 };
