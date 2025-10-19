@@ -1,12 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { IsInt, IsString, Min } from 'class-validator';
 
 export class StepDto {
   @ApiProperty({
     example: 1,
     description: 'Order number of the step',
   })
-  @IsNumber()
+  @IsInt({ message: 'Order must be an integer.' })
+  @Min(0, { message: 'Order cannot be negative.' })
   order: number;
 
   @ApiProperty({

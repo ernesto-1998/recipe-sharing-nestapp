@@ -8,6 +8,7 @@
 {
   "_id": "ObjectId",
   "email": "string",
+  "username": "string",
   "passwordHash": "string",
   "role": "string",
   "profile": {

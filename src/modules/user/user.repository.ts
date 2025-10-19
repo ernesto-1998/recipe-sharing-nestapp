@@ -12,7 +12,7 @@ export class UserRepository {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async findAll({
+  findAll({
     skip = 0,
     limit = 10,
   }: {
@@ -22,7 +22,7 @@ export class UserRepository {
     return this.userModel.find().skip(skip).limit(limit).exec();
   }
 
-  async count(): Promise<number> {
+  count(): Promise<number> {
     return this.userModel.countDocuments().exec();
   }
 

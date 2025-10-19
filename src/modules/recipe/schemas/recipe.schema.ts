@@ -42,3 +42,13 @@ export class Recipe {
 }
 
 export const RecipeSchema = SchemaFactory.createForClass(Recipe);
+
+RecipeSchema.virtual('author', {
+  ref: 'User',
+  localField: 'authorId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+RecipeSchema.set('toJSON', { virtuals: true });
+RecipeSchema.set('toObject', { virtuals: true });

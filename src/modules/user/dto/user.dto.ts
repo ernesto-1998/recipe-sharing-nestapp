@@ -16,7 +16,10 @@ export class UserDto {
     example: '64c9b2f3e8a1a2b4c56789de',
     description: 'Unique identifier of the user',
   })
-  @IsMongoId()
+  @IsMongoId({
+    message:
+      'The provided ID does not match the expected format for identifiers.',
+  })
   _id: string;
 
   @ApiProperty({

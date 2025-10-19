@@ -10,7 +10,10 @@ export class AuthorForRecipeDto {
   username: string;
 }
 
-export class ResponseRecipeDto extends OmitType(RecipeDto, ['__v'] as const) {
+export class ResponseRecipeDto extends OmitType(RecipeDto, [
+  '__v',
+  'authorId',
+] as const) {
   @ApiProperty({ type: () => AuthorForRecipeDto })
   author?: AuthorForRecipeDto;
 

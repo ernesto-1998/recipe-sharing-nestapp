@@ -4,12 +4,13 @@ import {
   IsBoolean,
   IsDate,
   IsMongoId,
-  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
   MinLength,
   MaxLength,
+  IsInt,
+  Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepDto } from './step.dto';
@@ -20,14 +21,20 @@ export class RecipeDto {
     example: '64c9b2f3e8a1a2b4c56789de',
     description: 'Unique identifier of the recipe',
   })
-  @IsMongoId()
+  @IsMongoId({
+    message:
+      'The provided ID does not match the expected format for identifiers.',
+  })
   _id: string;
 
   @ApiProperty({
     example: '64c9b2f3e8a1a2b4c56789df',
     description: 'ID of the author (user)',
   })
-  @IsMongoId()
+  @IsMongoId({
+    message:
+      'The provided ID does not match the expected format for identifiers.',
+  })
   authorId: string;
 
   @ApiProperty({
@@ -67,17 +74,19 @@ export class RecipeDto {
   steps: StepDto[];
 
   @ApiProperty({
-    example: 30,
-    description: 'Preparation time in minutes',
+    example: 1600,
+    description: 'Preparation time in seconds',
   })
-  @IsNumber()
+  @IsInt({ message: 'prepTime must be an integer.' })
+  @Min(0, { message: 'prepTime cannot be negative.' })
   prepTime: number;
 
   @ApiProperty({
     example: 4,
     description: 'Number of portions the recipe yields',
   })
-  @IsNumber()
+  @IsInt({ message: 'Portions must be an integer.' })
+  @Min(0, { message: 'Portions cannot be negative.' })
   portions: number;
 
   @ApiProperty({
