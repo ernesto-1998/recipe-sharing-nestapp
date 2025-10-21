@@ -11,10 +11,12 @@ import {
   MaxLength,
   IsInt,
   Min,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepDto } from './step.dto';
 import { IngredientDto } from './ingredient.dto';
+import { privacyLevel } from 'src/common/enums';
 
 export class RecipeDto {
   @ApiProperty({
@@ -115,11 +117,14 @@ export class RecipeDto {
   tags?: string[];
 
   @ApiProperty({
-    example: true,
-    description: 'Whether the recipe is public (true) or private (false)',
+    enum: privacyLevel,
+    example: privacyLevel.PUBLIC,
+    description: 'Recipe visibility: public or private',
+    required: false,
   })
-  @IsBoolean()
-  visibility: boolean;
+  @IsOptional()
+  @IsEnum(privacyLevel, { message: 'privacy must be either public or private' })
+  privacy?: privacyLevel;
 
   @ApiPropertyOptional({
     example: '2025-08-28T10:15:30.000Z',

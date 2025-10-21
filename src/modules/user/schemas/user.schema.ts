@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { Profile } from './profile.schema';
+import { privacyLevel } from 'src/common/enums';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -20,6 +21,13 @@ export class User {
 
   @Prop({ type: Profile, required: false })
   profile?: Profile;
+
+  @Prop({
+    type: String,
+    enum: privacyLevel,
+    default: privacyLevel.PUBLIC,
+  })
+  privacy?: privacyLevel;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

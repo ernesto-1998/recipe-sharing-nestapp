@@ -1,17 +1,31 @@
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsDateString,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { AddressDto } from './address.dto';
 import { SocialNetworksDto } from './social-networks.dto';
+import { IsNotFutureDate } from 'src/common/decorators';
 
 export class ProfileDto {
   @ApiPropertyOptional({
-    example: 'John Doe',
-    description: 'Full name of the user',
+    example: 'John Mike',
+    description: 'Firstname of the user',
   })
   @IsOptional()
   @IsString()
-  name?: string;
+  firstname?: string;
+
+  @ApiPropertyOptional({
+    example: 'Morales Figueroa',
+    description: 'Lastname of the user',
+  })
+  @IsOptional()
+  @IsString()
+  lastname?: string;
 
   @ApiPropertyOptional({
     example: 'Software engineer with 5 years of experience',
@@ -27,7 +41,12 @@ export class ProfileDto {
   })
   @IsOptional()
   @IsString()
-  profilePic?: string;
+  avatar?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @IsNotFutureDate({ message: 'Birth date cannot be in the future' })
+  birthDate?: string;
 
   @ApiPropertyOptional({
     type: () => SocialNetworksDto,
@@ -36,7 +55,7 @@ export class ProfileDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => SocialNetworksDto)
-  social_networks?: SocialNetworksDto;
+  socialNetworks?: SocialNetworksDto;
 
   @ApiPropertyOptional({
     type: () => AddressDto,

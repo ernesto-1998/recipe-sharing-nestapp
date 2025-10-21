@@ -5,16 +5,22 @@ import { SocialNetworks } from './social-networks.schema';
 @Schema({ _id: false })
 export class Profile {
   @Prop()
-  name: string;
+  firstname?: string;
+
+  @Prop()
+  lastname?: string;
 
   @Prop({ required: false })
   biography?: string;
 
   @Prop({ required: false })
-  profilePic?: string;
+  avatar?: string;
+
+  @Prop({ required: false })
+  birthDate?: Date;
 
   @Prop({ type: SocialNetworks, required: false })
-  social_networks?: SocialNetworks;
+  socialNetworks?: SocialNetworks;
 
   @Prop({ type: Address, required: false })
   address?: Address;

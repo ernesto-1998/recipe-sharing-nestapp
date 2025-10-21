@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Unit } from 'src/common/enums/ingredient-units.enum';
 
-@Schema()
+@Schema({ _id: false })
 export class Ingredient {
   @Prop({ required: true })
   name: string;

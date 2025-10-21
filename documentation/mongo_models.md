@@ -2,43 +2,38 @@
 
 ## Entities
 
-# User
+### User
 
 ```json
 {
   "_id": "ObjectId",
   "email": "string",
   "username": "string",
-  "passwordHash": "string",
+  "password": "string",
   "role": "string",
+  "privacy": "public | private",
   "profile": {
-    "name": "string",
+    "firstname": "string",
+    "lastname": "string",
     "biography": "string",
-    "profilePic": "string",
-    "social_networks": {
+    "avatar": "string",
+    "birthDate": "Date",
+    "socialNetworks": {
       "instagram": "string",
       "youtube": "string",
       "x": "string",
-      "facebook": "string"
+      "facebook": "string",
     },
     "address": {
       "country": "string",
-      "street": "string",
-      "city": "string",
-      "state": "string",
-      "postalCode": "string",
-      "coordinates": {
-        "lat": 0.0,
-        "lng": 0.0
-      }
-    }
+    },
   },
   "createdAt": "Date",
   "updatedAt": "Date"
 }
 ```
 
-# Recipe
+### Recipe
 
 ```json
 {
@@ -64,13 +59,13 @@
   "category": "string",
   "images": ["string"],
   "tags": ["string"],
-  "visibility": "boolean",
+  "privacy": "public | private",
   "createdAt": "Date",
   "updatedAt": "Date"
 }
 ```
 
-# Comment
+### Comment
 
 ```json
 {
@@ -84,7 +79,7 @@
 }
 ```
 
-# Favorite
+### Favorite
 
 ```json
 {
@@ -96,7 +91,7 @@
 }
 ```
 
-# Search_History
+### Search_History
 
 ```json
 {
@@ -112,7 +107,7 @@
 }
 ```
 
-# Report
+### Report
 
 ```json
 {
@@ -127,7 +122,7 @@
 }
 ```
 
-# Qualification
+#### Qualification
 
 ```json
 {

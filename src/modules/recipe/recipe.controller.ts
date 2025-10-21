@@ -8,10 +8,10 @@ import {
   Delete,
 } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
-import { CreateRecipeDto } from './dto/create-recipe.dto';
-import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { CreateRecipeDto } from './dto';
+import { UpdateRecipeDto } from './dto';
 
-@Controller('recipe')
+@Controller({ version: '1', path: 'recipes' })
 export class RecipeController {
   constructor(private readonly recipeService: RecipeService) {}
 

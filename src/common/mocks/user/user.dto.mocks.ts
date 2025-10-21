@@ -13,7 +13,7 @@ export const mockResponseUser: MockResponseUser = {
   email: 'robert@example.com',
   username: 'robert123',
   role: 'user',
-  profile: {} as Profile,
+  profile: {},
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -40,7 +40,7 @@ export const mockCreateUser: CreateUserDto = {
   username: 'robert123',
   password: 'hashedPassword',
   role: 'user',
-  profile: {} as Profile,
+  profile: {},
 };
 
 export const mockUpdateUser: UpdateUserDto = {

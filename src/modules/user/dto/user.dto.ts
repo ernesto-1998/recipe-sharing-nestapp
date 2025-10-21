@@ -7,9 +7,11 @@ import {
   MaxLength,
   ValidateNested,
   IsMongoId,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProfileDto } from './profile.dto';
+import { privacyLevel } from 'src/common/enums';
 
 export class UserDto {
   @ApiProperty({
@@ -64,6 +66,16 @@ export class UserDto {
   @ValidateNested()
   @Type(() => ProfileDto)
   profile?: ProfileDto;
+
+  @ApiProperty({
+    enum: privacyLevel,
+    example: privacyLevel.PUBLIC,
+    description: 'User profile visibility: public or private',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(privacyLevel, { message: 'privacy must be either public or private' })
+  privacy?: privacyLevel;
 
   @ApiPropertyOptional({
     example: '2025-08-28T10:15:30.000Z',
