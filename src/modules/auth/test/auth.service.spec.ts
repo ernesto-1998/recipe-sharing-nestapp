@@ -68,6 +68,7 @@ describe('AuthService', () => {
           message: 'User successfully authenticated',
           userId: mockMongoUser._id.toHexString(),
           username: mockMongoUser.username,
+          isSuperUser: false,
         },
         AuthService.name,
         HttpStatus.OK,
@@ -75,6 +76,7 @@ describe('AuthService', () => {
       expect(result).toEqual({
         userId: mockMongoUser._id.toHexString(),
         username: mockMongoUser.username,
+        isSuperUser: false,
       });
     });
 
@@ -143,12 +145,14 @@ describe('AuthService', () => {
       const user = {
         userId: mockResponseUser._id,
         username: mockResponseUser.username,
+        isSuperUser: false,
       };
       const result = await authService.logIn(user);
 
       expect(mockJwtService.signAsync).toHaveBeenCalledWith({
         sub: user.userId,
         username: user.username,
+        isSuperUser: false,
       });
       expect(mockLogger.log).toHaveBeenCalledWith(
         {

@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ITokenPayload, ITokenUser } from './interfaces/';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
+import { UserRolesLevel } from 'src/common/enums';
 
 @Injectable()
 export class AuthService {
@@ -32,6 +33,7 @@ export class AuthService {
             message: 'User successfully authenticated',
             userId: userRes._id.toHexString(),
             username: userRes.username,
+            isSuperUser: userRes.role === UserRolesLevel.SUPERUSER,
           },
           AuthService.name,
           HttpStatus.OK,
@@ -39,6 +41,7 @@ export class AuthService {
         return {
           userId: userRes._id.toHexString(),
           username: userRes.username,
+          isSuperUser: userRes.role === UserRolesLevel.SUPERUSER,
         };
       }
     }
@@ -58,6 +61,7 @@ export class AuthService {
     const tokenPayload: ITokenPayload = {
       sub,
       username: user.username,
+      isSuperUser: user.isSuperUser,
     };
     const accessToken = await this.jwtService.signAsync(tokenPayload);
     this.logger.log(

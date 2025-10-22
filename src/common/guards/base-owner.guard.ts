@@ -39,7 +39,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
       );
       throw new ForbiddenException('Missing user or resource ID.');
     }
-
+    if (user.isSuperUser) return true;
     const resource = await this.service.findById(resourceId);
     if (!resource) {
       this.logger.warn(
