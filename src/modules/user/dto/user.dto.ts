@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProfileDto } from './profile.dto';
-import { privacyLevel } from 'src/common/enums';
+import { PrivacyLevel, UserRolesLevel } from 'src/common/enums';
 
 export class UserDto {
   @ApiProperty({
@@ -52,10 +52,14 @@ export class UserDto {
   password: string;
 
   @ApiProperty({
-    example: 'admin',
-    description: 'Role assigned to the user',
+    enum: UserRolesLevel,
+    example: UserRolesLevel.USER,
+    description: 'User Role.',
   })
   @IsString()
+  @IsEnum(UserRolesLevel, {
+    message: 'User Role must be from the existing list.',
+  })
   role: string;
 
   @ApiPropertyOptional({
@@ -68,14 +72,14 @@ export class UserDto {
   profile?: ProfileDto;
 
   @ApiProperty({
-    enum: privacyLevel,
-    example: privacyLevel.PUBLIC,
+    enum: PrivacyLevel,
+    example: PrivacyLevel.PUBLIC,
     description: 'User profile visibility: public or private',
     required: false,
   })
   @IsOptional()
-  @IsEnum(privacyLevel, { message: 'privacy must be either public or private' })
-  privacy?: privacyLevel;
+  @IsEnum(PrivacyLevel, { message: 'privacy must be either public or private' })
+  privacy?: PrivacyLevel;
 
   @ApiPropertyOptional({
     example: '2025-08-28T10:15:30.000Z',

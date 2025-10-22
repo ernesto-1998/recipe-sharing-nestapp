@@ -16,7 +16,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepDto } from './step.dto';
 import { IngredientDto } from './ingredient.dto';
-import { privacyLevel } from 'src/common/enums';
+import { PrivacyLevel } from 'src/common/enums';
 
 export class RecipeDto {
   @ApiProperty({
@@ -117,14 +117,14 @@ export class RecipeDto {
   tags?: string[];
 
   @ApiProperty({
-    enum: privacyLevel,
-    example: privacyLevel.PUBLIC,
+    enum: PrivacyLevel,
+    example: PrivacyLevel.PUBLIC,
     description: 'Recipe visibility: public or private',
     required: false,
   })
   @IsOptional()
-  @IsEnum(privacyLevel, { message: 'privacy must be either public or private' })
-  privacy?: privacyLevel;
+  @IsEnum(PrivacyLevel, { message: 'privacy must be either public or private' })
+  privacy?: PrivacyLevel;
 
   @ApiPropertyOptional({
     example: '2025-08-28T10:15:30.000Z',

@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { Ingredient, IngredientSchema } from './ingredient.schema';
 import { Step, StepSchema } from './step.schema';
-import { privacyLevel } from 'src/common/enums';
+import { PrivacyLevel } from 'src/common/enums';
 
 export type RecipeDocument = HydratedDocument<Recipe>;
 
@@ -40,10 +40,10 @@ export class Recipe {
 
   @Prop({
     type: String,
-    enum: privacyLevel,
-    default: privacyLevel.PUBLIC,
+    enum: PrivacyLevel,
+    default: PrivacyLevel.PUBLIC,
   })
-  privacy?: privacyLevel;
+  privacy?: PrivacyLevel;
 }
 
 export const RecipeSchema = SchemaFactory.createForClass(Recipe);
