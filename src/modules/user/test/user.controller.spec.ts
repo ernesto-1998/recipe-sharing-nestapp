@@ -1,16 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   mockResponseUser,
   mockUpdatedUser,
   mockUpdateUser,
   mockPaginatedUsers,
+  mockTokenUser,
+  mockChangePassword,
 } from '../../../common/mocks/user';
-
 import { UserController } from '../user.controller';
 import { UserService } from '../user.service';
-import { NotFoundException } from '@nestjs/common';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
-import { Request } from 'express';
 import { RequestContextService } from 'src/common/context/request-context.service';
 
 class TestGuard {
@@ -19,32 +19,33 @@ class TestGuard {
   }
 }
 
-const mockUserService = {
-  create: jest.fn(),
-  update: jest.fn(),
-  remove: jest.fn(),
-  findAll: jest.fn(),
-  findById: jest.fn(),
-  findByUsername: jest.fn(),
-  findByEmail: jest.fn(),
-};
-
-const mockRequestContextService: Partial<RequestContextService> = {
-  getContext: jest.fn().mockReturnValue({
-    full_url: 'http://localhost:5000/users',
-    protocol: 'http',
-    host: 'localhost:5000',
-    path: '/users',
-  }),
-};
-
 describe('UserController', () => {
   let userController: UserController;
-
-  let module: TestingModule;
+  let userService: jest.Mocked<UserService>;
+  let requestContextService: jest.Mocked<RequestContextService>;
 
   beforeEach(async () => {
-    module = await Test.createTestingModule({
+    const mockUserService = {
+      create: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
+      findAll: jest.fn(),
+      findById: jest.fn(),
+      findByUsername: jest.fn(),
+      findByEmail: jest.fn(),
+      changePassword: jest.fn(),
+    };
+
+    const mockRequestContextService = {
+      getContext: jest.fn().mockReturnValue({
+        full_url: 'http://localhost:5000/users',
+        protocol: 'http',
+        host: 'localhost:5000',
+        path: '/users',
+      }),
+    };
+
+    const module = await Test.createTestingModule({
       controllers: [UserController],
       providers: [
         { provide: UserService, useValue: mockUserService },
@@ -54,13 +55,14 @@ describe('UserController', () => {
       .overrideGuard(UserOwnerGuard)
       .useValue(new TestGuard())
       .compile();
-    userController = module.get<UserController>(UserController);
+
+    userController = module.get(UserController);
+    userService = module.get(UserService);
+    requestContextService = module.get(RequestContextService);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
-    jest.restoreAllMocks();
-    await module.close();
   });
 
   it('should be defined', () => {
@@ -69,7 +71,7 @@ describe('UserController', () => {
 
   describe('update', () => {
     it('should update and return the updated user', async () => {
-      mockUserService.update.mockResolvedValue(mockUpdatedUser);
+      userService.update.mockResolvedValue(mockUpdatedUser);
 
       const result = await userController.update(
         mockUpdatedUser._id,
@@ -77,104 +79,160 @@ describe('UserController', () => {
       );
 
       expect(result).toEqual(mockUpdatedUser);
-      expect(mockUserService.update).toHaveBeenCalledWith(
+      expect(userService.update).toHaveBeenCalledWith(
         mockUpdatedUser._id,
         mockUpdateUser,
       );
     });
 
     it('should throw NotFoundException if user to update is not found', async () => {
-      mockUserService.update.mockRejectedValue(
+      userService.update.mockRejectedValue(
         new NotFoundException('User with this ID does not exists.'),
       );
+
       await expect(
         userController.update('nonExistentId', mockUpdateUser),
       ).rejects.toThrow(NotFoundException);
-      expect(mockUserService.update).toHaveBeenCalledWith(
+
+      expect(userService.update).toHaveBeenCalledWith(
         'nonExistentId',
         mockUpdateUser,
       );
     });
   });
 
+  describe('changePassword', () => {
+    it('should change the password successfully', async () => {
+      userService.changePassword.mockResolvedValue(undefined);
+
+      const result = await userController.changePassword(
+        mockTokenUser,
+        mockChangePassword,
+      );
+
+      expect(userService.changePassword).toHaveBeenCalledWith(
+        mockTokenUser.userId,
+        mockChangePassword,
+      );
+      expect(result).toEqual({ message: 'Password successfully changed.' });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      userService.changePassword.mockRejectedValue(
+        new NotFoundException('User not found.'),
+      );
+
+      await expect(
+        userController.changePassword(mockTokenUser, mockChangePassword),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(userService.changePassword).toHaveBeenCalledWith(
+        mockTokenUser.userId,
+        mockChangePassword,
+      );
+    });
+
+    it('should throw BadRequestException if current password is incorrect', async () => {
+      userService.changePassword.mockRejectedValue(
+        new BadRequestException('Incorrect current password.'),
+      );
+
+      await expect(
+        userController.changePassword(mockTokenUser, mockChangePassword),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(userService.changePassword).toHaveBeenCalledWith(
+        mockTokenUser.userId,
+        mockChangePassword,
+      );
+    });
+  });
+
   describe('remove', () => {
     it('should remove and return the deleted user', async () => {
-      mockUserService.remove.mockResolvedValue(mockResponseUser);
+      userService.remove.mockResolvedValue(mockResponseUser);
+
       const result = await userController.remove(mockResponseUser._id);
 
       expect(result).toEqual(mockResponseUser);
-      expect(mockUserService.remove).toHaveBeenCalledWith(mockResponseUser._id);
+      expect(userService.remove).toHaveBeenCalledWith(mockResponseUser._id);
     });
 
     it('should throw NotFoundException if user to remove is not found', async () => {
-      mockUserService.remove.mockRejectedValue(
+      userService.remove.mockRejectedValue(
         new NotFoundException('User with this ID does not exists.'),
       );
+
       await expect(userController.remove('nonExistentId')).rejects.toThrow(
         NotFoundException,
       );
-      expect(mockUserService.remove).toHaveBeenCalledWith('nonExistentId');
+
+      expect(userService.remove).toHaveBeenCalledWith('nonExistentId');
     });
   });
 
   describe('findAll', () => {
     it('should return an array of users', async () => {
-      mockUserService.findAll.mockResolvedValue(mockPaginatedUsers);
+      userService.findAll.mockResolvedValue(mockPaginatedUsers);
 
       const result = await userController.findAll({ page: 1, limit: 10 });
 
       expect(result).toEqual(mockPaginatedUsers);
-      expect(mockUserService.findAll).toHaveBeenCalled();
-      expect(mockRequestContextService.getContext).toHaveBeenCalled();
+      expect(userService.findAll).toHaveBeenCalled();
+      expect(requestContextService.getContext).toHaveBeenCalled();
     });
   });
 
   describe('findById', () => {
     it('should return a user by ID', async () => {
-      mockUserService.findById.mockResolvedValue(mockResponseUser);
+      userService.findById.mockResolvedValue(mockResponseUser);
+
       const result = await userController.findById(mockResponseUser._id);
+
       expect(result).toEqual(mockResponseUser);
-      expect(mockUserService.findById).toHaveBeenCalledWith(
-        mockResponseUser._id,
-      );
+      expect(userService.findById).toHaveBeenCalledWith(mockResponseUser._id);
     });
 
     it('should throw NotFoundException if user is not found by ID', async () => {
-      mockUserService.findById.mockRejectedValue(
+      userService.findById.mockRejectedValue(
         new NotFoundException('User with this ID does not exists.'),
       );
+
       await expect(
         userController.findById(mockResponseUser._id),
       ).rejects.toThrow(NotFoundException);
       await expect(
         userController.findById(mockResponseUser._id),
       ).rejects.toThrow('User with this ID does not exists.');
-      expect(mockUserService.findById).toHaveBeenCalledWith(
-        mockResponseUser._id,
-      );
+
+      expect(userService.findById).toHaveBeenCalledWith(mockResponseUser._id);
     });
   });
 
   describe('findByUsername', () => {
     it('should return a user by username', async () => {
-      mockUserService.findByUsername.mockResolvedValue(mockResponseUser);
+      userService.findByUsername.mockResolvedValue(mockResponseUser);
+
       const result = await userController.findByUsername(
         mockResponseUser.username,
       );
+
       expect(result).toEqual(mockResponseUser);
-      expect(mockUserService.findByUsername).toHaveBeenCalledWith(
+      expect(userService.findByUsername).toHaveBeenCalledWith(
         mockResponseUser.username,
       );
     });
 
     it('should throw NotFoundException if user is not found by username', async () => {
-      mockUserService.findByUsername.mockRejectedValue(
+      userService.findByUsername.mockRejectedValue(
         new NotFoundException('User with this username does not exists.'),
       );
+
       await expect(
         userController.findByUsername('nonExistentUser'),
       ).rejects.toThrow(NotFoundException);
-      expect(mockUserService.findByUsername).toHaveBeenCalledWith(
+
+      expect(userService.findByUsername).toHaveBeenCalledWith(
         'nonExistentUser',
       );
     });
@@ -182,22 +240,26 @@ describe('UserController', () => {
 
   describe('findByEmail', () => {
     it('should return a user by email', async () => {
-      mockUserService.findByEmail.mockResolvedValue(mockResponseUser);
+      userService.findByEmail.mockResolvedValue(mockResponseUser);
+
       const result = await userController.findByEmail(mockResponseUser.email);
+
       expect(result).toEqual(mockResponseUser);
-      expect(mockUserService.findByEmail).toHaveBeenCalledWith(
+      expect(userService.findByEmail).toHaveBeenCalledWith(
         mockResponseUser.email,
       );
     });
 
     it('should throw NotFoundException if user is not found by email', async () => {
-      mockUserService.findByEmail.mockRejectedValue(
+      userService.findByEmail.mockRejectedValue(
         new NotFoundException('User with this email does not exists.'),
       );
+
       await expect(
         userController.findByEmail('nonexistent@example.com'),
       ).rejects.toThrow(NotFoundException);
-      expect(mockUserService.findByEmail).toHaveBeenCalledWith(
+
+      expect(userService.findByEmail).toHaveBeenCalledWith(
         'nonexistent@example.com',
       );
     });

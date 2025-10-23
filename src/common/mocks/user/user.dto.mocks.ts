@@ -1,10 +1,11 @@
+import { ITokenUser } from 'src/modules/auth/interfaces';
 import {
   CreateUserDto,
   UpdateUserDto,
   ResponseUserDto,
   PaginatedUsersResponseDto,
+  ChangePasswordDto,
 } from '../../../modules/user/dto';
-import { Profile } from '../../../modules/user/schemas/profile.schema';
 
 export type MockResponseUser = Omit<ResponseUserDto, 'password'>;
 
@@ -50,4 +51,15 @@ export const mockUpdateUser: UpdateUserDto = {
 export const mockUpdatedUser: MockResponseUser = {
   ...mockResponseUser,
   username: 'updatedUser',
+};
+
+export const mockTokenUser: ITokenUser = {
+  userId: mockResponseUser._id,
+  username: mockResponseUser.username,
+  isSuperUser: false,
+};
+
+export const mockChangePassword: ChangePasswordDto = {
+  currentPassword: mockCreateUser.password,
+  newPassword: 'newPassword123',
 };

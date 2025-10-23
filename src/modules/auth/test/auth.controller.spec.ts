@@ -1,28 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConflictException } from '@nestjs/common';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 import { UserService } from '../../user/user.service';
 import {
   mockResponseUser,
-  mockLoginUser,
   mockCreateUser,
+  mockTokenUser,
 } from '../../../common/mocks/user';
 import { AuthResponseDto } from '../dto/auth-response.dto';
-import { ConflictException } from '@nestjs/common';
 import { LoginDto } from '../dto';
-
-const mockAuthService = {
-  logIn: jest.fn(),
-};
-
-const mockUserService = {
-  create: jest.fn(),
-};
 
 describe('AuthController', () => {
   let authController: AuthController;
+  let authService: jest.Mocked<AuthService>;
+  let userService: jest.Mocked<UserService>;
 
   beforeEach(async () => {
+    const mockAuthService = {
+      logIn: jest.fn(),
+    };
+
+    const mockUserService = {
+      create: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
@@ -31,11 +33,17 @@ describe('AuthController', () => {
       ],
     }).compile();
 
-    authController = module.get<AuthController>(AuthController);
+    authController = module.get(AuthController);
+    authService = module.get(AuthService);
+    userService = module.get(UserService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(authController).toBeDefined();
   });
 
   describe('login', () => {
@@ -49,34 +57,39 @@ describe('AuthController', () => {
         email: mockCreateUser.email,
         password: mockCreateUser.password,
       };
-      mockAuthService.logIn.mockResolvedValue(mockResponse);
 
-      const result = await authController.login(mockLoginBody, mockLoginUser);
+      authService.logIn.mockResolvedValue(mockResponse);
 
-      expect(mockAuthService.logIn).toHaveBeenCalledWith(mockLoginUser);
+      const result = await authController.login(mockLoginBody, mockTokenUser);
+
+      expect(authService.logIn).toHaveBeenCalledWith(mockTokenUser);
       expect(result).toEqual(mockResponse);
     });
   });
 
   describe('create (register)', () => {
     it('should create a user and return it', async () => {
-      mockUserService.create.mockResolvedValue(mockResponseUser);
+      userService.create.mockResolvedValue(mockResponseUser);
+
       const result = await authController.create(mockCreateUser);
+
       expect(result).toEqual(mockResponseUser);
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUser);
+      expect(userService.create).toHaveBeenCalledWith(mockCreateUser);
     });
 
     it('should throw ConflictException if user creation fails due to conflict', async () => {
-      mockUserService.create.mockRejectedValue(
+      userService.create.mockRejectedValue(
         new ConflictException('User with this email already exists.'),
       );
+
       await expect(authController.create(mockCreateUser)).rejects.toThrow(
         ConflictException,
       );
       await expect(authController.create(mockCreateUser)).rejects.toThrow(
         'User with this email already exists.',
       );
-      expect(mockUserService.create).toHaveBeenCalledWith(mockCreateUser);
+
+      expect(userService.create).toHaveBeenCalledWith(mockCreateUser);
     });
   });
 });

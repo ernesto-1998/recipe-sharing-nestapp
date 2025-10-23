@@ -1,35 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { HttpStatus, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth.service';
 import { UserService } from '../../user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { HttpStatus, UnauthorizedException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { mockResponseUser, mockMongoUser } from '../../../common/mocks/user';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 import { AppLogger } from 'src/common/interfaces';
 
 jest.mock('bcrypt');
 
-const mockUserService = {
-  checkIfUserExistsByEmail: jest.fn(),
-};
-
-const mockJwtService = {
-  signAsync: jest.fn(),
-};
-
-const mockLogger: Partial<AppLogger> = {
-  log: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn(),
-  verbose: jest.fn(),
-  debug: jest.fn(),
-};
-
 describe('AuthService', () => {
   let authService: AuthService;
+  let userService: jest.Mocked<UserService>;
+  let jwtService: jest.Mocked<JwtService>;
+  let logger: jest.Mocked<AppLogger>;
 
   beforeEach(async () => {
+    const mockUserService = {
+      checkIfUserExistsByEmail: jest.fn(),
+    };
+
+    const mockJwtService = {
+      signAsync: jest.fn(),
+    };
+
+    const mockLogger = {
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+      verbose: jest.fn(),
+      debug: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -39,11 +42,18 @@ describe('AuthService', () => {
       ],
     }).compile();
 
-    authService = module.get<AuthService>(AuthService);
+    authService = module.get(AuthService);
+    userService = module.get(UserService);
+    jwtService = module.get(JwtService);
+    logger = module.get(CustomToken.APP_LOGGER);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(authService).toBeDefined();
   });
 
   describe('validateUser', () => {
@@ -51,19 +61,19 @@ describe('AuthService', () => {
       const password = 'plainPassword';
       const input = { email: mockResponseUser.email, password };
 
-      mockUserService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
+      userService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await authService.validateUser(input);
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
         input.email,
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(
         password,
         mockMongoUser.password,
       );
-      expect(mockLogger.log).toHaveBeenCalledWith(
+      expect(logger.log).toHaveBeenCalledWith(
         {
           message: 'User successfully authenticated',
           userId: mockMongoUser._id.toHexString(),
@@ -82,7 +92,8 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException and log warning if email does not exist', async () => {
       const input = { email: 'notfound@test.com', password: 'any' };
-      mockUserService.checkIfUserExistsByEmail.mockResolvedValue(null);
+
+      userService.checkIfUserExistsByEmail.mockResolvedValue(null);
 
       await expect(authService.validateUser(input)).rejects.toThrow(
         UnauthorizedException,
@@ -91,11 +102,11 @@ describe('AuthService', () => {
         'Invalid credentials.',
       );
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
         input.email,
       );
       expect(bcrypt.compare).not.toHaveBeenCalled();
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         {
           message: 'Invalid credentials attempt',
           email: input.email,
@@ -103,12 +114,13 @@ describe('AuthService', () => {
         AuthService.name,
         HttpStatus.UNAUTHORIZED,
       );
-      expect(mockLogger.log).not.toHaveBeenCalled();
+      expect(logger.log).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException and log warning if password does not match', async () => {
       const input = { email: mockMongoUser.email, password: 'wrong' };
-      mockUserService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
+
+      userService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(authService.validateUser(input)).rejects.toThrow(
@@ -118,14 +130,14 @@ describe('AuthService', () => {
         'Invalid credentials.',
       );
 
-      expect(mockUserService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
+      expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
         input.email,
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(
         input.password,
         mockMongoUser.password,
       );
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         {
           message: 'Invalid credentials attempt',
           email: input.email,
@@ -133,34 +145,35 @@ describe('AuthService', () => {
         AuthService.name,
         HttpStatus.UNAUTHORIZED,
       );
-      expect(mockLogger.log).not.toHaveBeenCalled();
+      expect(logger.log).not.toHaveBeenCalled();
     });
   });
 
   describe('logIn', () => {
     it('should return access token and user info', async () => {
       const mockToken = 'mock.jwt.token';
-      mockJwtService.signAsync.mockResolvedValue(mockToken);
-
       const user = {
         userId: mockResponseUser._id,
         username: mockResponseUser.username,
         isSuperUser: false,
       };
+
+      jwtService.signAsync.mockResolvedValue(mockToken);
+
       const result = await authService.logIn(user);
 
-      expect(mockJwtService.signAsync).toHaveBeenCalledWith({
+      expect(jwtService.signAsync).toHaveBeenCalledWith({
         sub: user.userId,
         username: user.username,
         isSuperUser: false,
       });
-      expect(mockLogger.log).toHaveBeenCalledWith(
+      expect(logger.log).toHaveBeenCalledWith(
         {
           message: 'Access token issued',
           userId: user.userId,
         },
         AuthService.name,
-        HttpStatus.OK, // 200
+        HttpStatus.OK,
       );
       expect(result).toEqual({
         accessToken: mockToken,

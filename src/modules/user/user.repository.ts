@@ -66,6 +66,19 @@ export class UserRepository {
       .exec();
   }
 
+  async changePassword(
+    userId: string,
+    hashedPassword: string,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $set: { password: hashedPassword } },
+        { new: true, runValidators: true },
+      )
+      .exec();
+  }
+
   deleteById(userId: string): Promise<UserDocument | null> {
     return this.userModel.findByIdAndDelete(userId).exec();
   }

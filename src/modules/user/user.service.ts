@@ -4,6 +4,7 @@ import {
   NotFoundException,
   Inject,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
@@ -12,6 +13,7 @@ import {
   UpdateUserDto,
   ResponseUserDto,
   PaginatedUsersResponseDto,
+  ChangePasswordDto,
 } from './dto';
 import { UserDocument } from './schemas/user.schema';
 import { UserRepository } from './user.repository';
@@ -85,6 +87,31 @@ export class UserService {
       HttpStatus.OK,
     );
     return Mapper.toResponse(ResponseUserDto, user);
+  }
+
+  async changePassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) throw new NotFoundException('User not found.');
+
+    const isMatch = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+    if (!isMatch) throw new BadRequestException('Incorrect current password.');
+
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    this.logger.log(
+      {
+        message: 'Password updated.',
+        userId,
+      },
+      UserService.name,
+      HttpStatus.OK,
+    );
+    await this.userRepository.changePassword(userId, hashedPassword);
   }
 
   async remove(userId: string): Promise<ResponseUserDto> {

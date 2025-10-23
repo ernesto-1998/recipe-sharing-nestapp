@@ -8,6 +8,7 @@ import {
   ValidateNested,
   IsMongoId,
   IsEnum,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProfileDto } from './profile.dto';
@@ -48,6 +49,10 @@ export class UserDto {
   @MinLength(8, { message: 'The min length of password is 8' })
   @MaxLength(20, {
     message: 'The password can not accept more than 20 characters',
+  })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).+$/, {
+    message:
+      'Password too weak. It must contain uppercase, lowercase, number, and special character.',
   })
   password: string;
 

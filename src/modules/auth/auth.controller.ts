@@ -12,7 +12,7 @@ import { UserService } from '../user/user.service';
 import { AuthResponseDto, LoginDto } from './dto';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import type { ITokenUser } from './interfaces';
-import { CurrentUser } from './current-user.decorator';
+import { CurrentUser } from './decorators';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
   ApiBadRequestResponse,

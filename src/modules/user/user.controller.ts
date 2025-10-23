@@ -7,13 +7,13 @@ import {
   Delete,
   UseGuards,
   Query,
-  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
   UpdateUserDto,
   ResponseUserDto,
   PaginatedUsersResponseDto,
+  ChangePasswordDto,
 } from './dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
@@ -22,11 +22,14 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 import { ApiOkResponsePaginated } from 'src/common/decorators/api-ok-response-paginated.decorator';
 import { RequestContextService } from 'src/common/context/request-context.service';
+import { CurrentUser } from '../auth/decorators';
+import type { ITokenUser } from '../auth/interfaces';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
@@ -35,6 +38,34 @@ export class UserController {
     private readonly requestCxt: RequestContextService,
     private readonly userService: UserService,
   ) {}
+
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiOkResponse({
+    description: 'Password successfully changed.',
+    schema: {
+      example: {
+        message: 'Password successfully changed.',
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Invalid current password.',
+    schema: {
+      example: {
+        statusCode: 401,
+        message: 'Current password is incorrect.',
+        error: 'Unauthorized',
+      },
+    },
+  })
+  @Patch('change-password')
+  async changePassword(
+    @CurrentUser() user: ITokenUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    await this.userService.changePassword(user.userId, changePasswordDto);
+    return { message: 'Password successfully changed.' };
+  }
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
