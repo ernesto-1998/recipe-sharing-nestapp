@@ -30,6 +30,44 @@ export class UserService {
     @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
   ) {}
 
+  async findAll(
+    { page = 1, limit = 10 }: PaginationQueryDto,
+    baseUrl: string,
+  ): Promise<PaginatedUsersResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      this.userRepository.findAll({ skip, limit }),
+      this.userRepository.count(),
+    ]);
+
+    return {
+      info: buildPaginationInfo(total, page, limit, baseUrl),
+      results: Mapper.toResponseMany(ResponseUserDto, users),
+    };
+  }
+
+  async findById(userId: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findById(userId);
+    if (user === null)
+      throw new NotFoundException('User with this ID does not exists.');
+    return Mapper.toResponse(ResponseUserDto, user);
+  }
+
+  async findByUsername(username: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findByUsername(username);
+    if (user === null)
+      throw new NotFoundException('User with this username does not exists.');
+    return Mapper.toResponse(ResponseUserDto, user);
+  }
+
+  async findByEmail(email: string): Promise<ResponseUserDto> {
+    const user = await this.userRepository.findByEmail(email);
+    if (user === null)
+      throw new NotFoundException('User with this email does not exists.');
+    return Mapper.toResponse(ResponseUserDto, user);
+  }
+
   async create(createUserDto: CreateUserDto): Promise<ResponseUserDto> {
     const existingUserByEmail: boolean =
       await this.userRepository.existsByEmail(createUserDto.email);
@@ -126,44 +164,6 @@ export class UserService {
       UserService.name,
       HttpStatus.OK,
     );
-    return Mapper.toResponse(ResponseUserDto, user);
-  }
-
-  async findAll(
-    { page = 1, limit = 10 }: PaginationQueryDto,
-    baseUrl: string,
-  ): Promise<PaginatedUsersResponseDto> {
-    const skip = (page - 1) * limit;
-
-    const [users, total] = await Promise.all([
-      this.userRepository.findAll({ skip, limit }),
-      this.userRepository.count(),
-    ]);
-
-    return {
-      info: buildPaginationInfo(total, page, limit, baseUrl),
-      results: Mapper.toResponseMany(ResponseUserDto, users),
-    };
-  }
-
-  async findById(userId: string): Promise<ResponseUserDto> {
-    const user = await this.userRepository.findById(userId);
-    if (user === null)
-      throw new NotFoundException('User with this ID does not exists.');
-    return Mapper.toResponse(ResponseUserDto, user);
-  }
-
-  async findByUsername(username: string): Promise<ResponseUserDto> {
-    const user = await this.userRepository.findByUsername(username);
-    if (user === null)
-      throw new NotFoundException('User with this username does not exists.');
-    return Mapper.toResponse(ResponseUserDto, user);
-  }
-
-  async findByEmail(email: string): Promise<ResponseUserDto> {
-    const user = await this.userRepository.findByEmail(email);
-    if (user === null)
-      throw new NotFoundException('User with this email does not exists.');
     return Mapper.toResponse(ResponseUserDto, user);
   }
 

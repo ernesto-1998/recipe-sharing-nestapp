@@ -28,7 +28,7 @@ export class RecipeRepository {
   }
 
   findAllByAuthorId(
-    authorId: number,
+    authorId: string,
     {
       skip = 0,
       limit = 10,
@@ -52,6 +52,10 @@ export class RecipeRepository {
       .findById(recipeId)
       .populate('author', '_id username')
       .exec();
+  }
+
+  count(): Promise<number> {
+    return this.recipeModel.countDocuments().exec();
   }
 
   create(createRecipeDto: CreateRecipeDto): Promise<RecipeDocument> {

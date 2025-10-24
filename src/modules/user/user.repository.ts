@@ -22,10 +22,6 @@ export class UserRepository {
     return this.userModel.find().skip(skip).limit(limit).exec();
   }
 
-  count(): Promise<number> {
-    return this.userModel.countDocuments().exec();
-  }
-
   findById(userId: string): Promise<UserDocument | null> {
     return this.userModel.findById(userId).exec();
   }
@@ -38,19 +34,13 @@ export class UserRepository {
     return this.userModel.findOne({ email }).exec();
   }
 
+  count(): Promise<number> {
+    return this.userModel.countDocuments().exec();
+  }
+
   create(createUserDto: CreateUserDto): Promise<UserDocument> {
     const createdUser = new this.userModel(createUserDto);
     return createdUser.save();
-  }
-
-  async existsByEmail(email: string): Promise<boolean> {
-    const user = await this.userModel.findOne({ email }).exec();
-    return !!user;
-  }
-
-  async existsByUsername(username: string): Promise<boolean> {
-    const user = await this.userModel.findOne({ username }).exec();
-    return !!user;
   }
 
   updateById(
@@ -81,5 +71,15 @@ export class UserRepository {
 
   deleteById(userId: string): Promise<UserDocument | null> {
     return this.userModel.findByIdAndDelete(userId).exec();
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const user = await this.userModel.findOne({ email }).exec();
+    return !!user;
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    const user = await this.userModel.findOne({ username }).exec();
+    return !!user;
   }
 }

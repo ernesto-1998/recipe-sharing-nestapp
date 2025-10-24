@@ -1,26 +1,119 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { RecipeRepository } from './recipe.repository';
+import type { AppLogger } from 'src/common/interfaces';
+import { CustomToken } from 'src/common/enums';
+import { ResponseRecipeDto } from './dto';
+import { Mapper } from 'src/common/utils/mapper';
+import { PaginationQueryDto } from 'src/common/dto';
+import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
+import { buildPaginationInfo } from 'src/common/utils/pagination';
 
 @Injectable()
 export class RecipeService {
-  create(createRecipeDto: CreateRecipeDto) {
-    return 'This action adds a new recipe';
+  constructor(
+    private readonly recipeRepository: RecipeRepository,
+    @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
+  ) {}
+
+  async findAll(
+    { page = 1, limit = 10 }: PaginationQueryDto,
+    baseUrl: string,
+  ): Promise<PaginatedRecipesResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const [recipes, total] = await Promise.all([
+      this.recipeRepository.findAll({ skip, limit }),
+      this.recipeRepository.count(),
+    ]);
+
+    return {
+      info: buildPaginationInfo(total, page, limit, baseUrl),
+      results: Mapper.toResponseMany(ResponseRecipeDto, recipes),
+    };
   }
 
-  findAll() {
-    return `This action returns all recipe`;
+  async findAllByAuthorId(
+    authorId: string,
+    { page = 1, limit = 10 }: PaginationQueryDto,
+    baseUrl: string,
+  ): Promise<PaginatedRecipesResponseDto> {
+    const skip = (page - 1) * limit;
+
+    const [recipes, total] = await Promise.all([
+      this.recipeRepository.findAllByAuthorId(authorId, { skip, limit }),
+      this.recipeRepository.count(),
+    ]);
+
+    return {
+      info: buildPaginationInfo(total, page, limit, baseUrl),
+      results: Mapper.toResponseMany(ResponseRecipeDto, recipes),
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} recipe`;
+  async findOne(recipeId: string): Promise<ResponseRecipeDto> {
+    const recipe = await this.recipeRepository.findById(recipeId);
+    if (recipe === null)
+      throw new NotFoundException('This recipe does not exists.');
+    return Mapper.toResponse(ResponseRecipeDto, recipe);
   }
 
-  update(id: number, updateRecipeDto: UpdateRecipeDto) {
-    return `This action updates a #${id} recipe`;
+  async create(createRecipeDto: CreateRecipeDto): Promise<ResponseRecipeDto> {
+    const recipe = await this.recipeRepository.create(createRecipeDto);
+    this.logger.log(
+      {
+        message: 'Recipe created.',
+        recipeId: recipe._id,
+        authorId: recipe.authorId,
+      },
+      RecipeService.name,
+      HttpStatus.CREATED,
+    );
+    return Mapper.toResponse(ResponseRecipeDto, recipe);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} recipe`;
+  async update(
+    recipeId: string,
+    updateRecipeDto: UpdateRecipeDto,
+  ): Promise<ResponseRecipeDto> {
+    const recipe = await this.recipeRepository.updateById(
+      recipeId,
+      updateRecipeDto,
+    );
+    if (recipe === null)
+      throw new NotFoundException('This recipe does not exists.');
+    this.logger.log(
+      {
+        message: 'Recipe updated.',
+        recipeId: recipe._id,
+        authorId: recipe.authorId,
+        newValues: updateRecipeDto,
+      },
+      RecipeService.name,
+      HttpStatus.OK,
+    );
+    return Mapper.toResponse(ResponseRecipeDto, recipe);
+  }
+
+  async remove(recipeId: string): Promise<ResponseRecipeDto> {
+    const recipe = await this.recipeRepository.deleteById(recipeId);
+    if (recipe === null)
+      throw new NotFoundException('This recipe does not exists.');
+    this.logger.log(
+      {
+        message: 'Recipe deleted.',
+        recipeId: recipe._id,
+        authorId: recipe.authorId,
+      },
+      RecipeService.name,
+      HttpStatus.OK,
+    );
+    return Mapper.toResponse(ResponseRecipeDto, recipe);
   }
 }
