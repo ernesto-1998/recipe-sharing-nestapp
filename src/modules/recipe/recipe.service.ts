@@ -39,15 +39,15 @@ export class RecipeService {
     };
   }
 
-  async findAllByAuthorId(
-    authorId: string,
+  async findAllByUserId(
+    userId: string,
     { page = 1, limit = 10 }: PaginationQueryDto,
     baseUrl: string,
   ): Promise<PaginatedRecipesResponseDto> {
     const skip = (page - 1) * limit;
 
     const [recipes, total] = await Promise.all([
-      this.recipeRepository.findAllByAuthorId(authorId, { skip, limit }),
+      this.recipeRepository.findAllByUserId(userId, { skip, limit }),
       this.recipeRepository.count(),
     ]);
 
@@ -57,7 +57,7 @@ export class RecipeService {
     };
   }
 
-  async findOne(recipeId: string): Promise<ResponseRecipeDto> {
+  async findById(recipeId: string): Promise<ResponseRecipeDto> {
     const recipe = await this.recipeRepository.findById(recipeId);
     if (recipe === null)
       throw new NotFoundException('This recipe does not exists.');
@@ -70,7 +70,7 @@ export class RecipeService {
       {
         message: 'Recipe created.',
         recipeId: recipe._id,
-        authorId: recipe.authorId,
+        userId: recipe.userId,
       },
       RecipeService.name,
       HttpStatus.CREATED,
@@ -92,7 +92,7 @@ export class RecipeService {
       {
         message: 'Recipe updated.',
         recipeId: recipe._id,
-        authorId: recipe.authorId,
+        userId: recipe.userId,
         newValues: updateRecipeDto,
       },
       RecipeService.name,
@@ -109,7 +109,7 @@ export class RecipeService {
       {
         message: 'Recipe deleted.',
         recipeId: recipe._id,
-        authorId: recipe.authorId,
+        userId: recipe.userId,
       },
       RecipeService.name,
       HttpStatus.OK,

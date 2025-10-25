@@ -39,7 +39,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Invalid credentials.' })
   @UseGuards(LocalAuthGuard)
   async login(
-    @Body() loginDto: LoginDto,
+    @Body() _loginDto: LoginDto,
     @CurrentUser() user: ITokenUser,
   ): Promise<AuthResponseDto> {
     return await this.authService.logIn(user);

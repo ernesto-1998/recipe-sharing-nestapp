@@ -39,33 +39,78 @@ export class UserController {
     private readonly userService: UserService,
   ) {}
 
-  @ApiOperation({ summary: 'Change user password' })
+  @Public()
+  @ApiOperation({ summary: 'Get all users (paginated)' })
+  @ApiOkResponsePaginated(ResponseUserDto)
+  @Get()
+  async findAll(
+    @Query() paginationQuery: PaginationQueryDto,
+  ): Promise<PaginatedUsersResponseDto> {
+    const baseUrl = this.requestCxt.getContext()?.full_url || '';
+    return this.userService.findAll(paginationQuery, baseUrl);
+  }  
+
+  @ApiOperation({ summary: 'Get an user by his username' })
   @ApiOkResponse({
-    description: 'Password successfully changed.',
+    description: 'Successfully retrieved the user by his username',
+    type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
     schema: {
       example: {
-        message: 'Password successfully changed.',
+        statusCode: 404,
+        message: 'User with this username does not exists.',
+        error: 'Not Found',
       },
     },
   })
-  @ApiUnauthorizedResponse({
-    description: 'Invalid current password.',
-    schema: {
-      example: {
-        statusCode: 401,
-        message: 'Current password is incorrect.',
-        error: 'Unauthorized',
-      },
-    },
-  })
-  @Patch('change-password')
-  async changePassword(
-    @CurrentUser() user: ITokenUser,
-    @Body() changePasswordDto: ChangePasswordDto,
-  ): Promise<{ message: string }> {
-    await this.userService.changePassword(user.userId, changePasswordDto);
-    return { message: 'Password successfully changed.' };
+  @Get('username/:username')
+  async findByUsername(
+    @Param('username') username: string,
+  ): Promise<ResponseUserDto> {
+    return await this.userService.findByUsername(username);
   }
+
+  @ApiOperation({ summary: 'Get an user by his email' })
+  @ApiOkResponse({
+    description: 'Successfully retrieved the user by his email',
+    type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this email does not exists.',
+        error: 'Not Found',
+      },
+    },
+  })
+  @Get('email/:email')
+  async findByEmail(@Param('email') email: string): Promise<ResponseUserDto> {
+    return await this.userService.findByEmail(email);
+  }  
+
+  @ApiOperation({ summary: 'Get an user by his ID' })
+  @ApiOkResponse({
+    description: 'Successfully retrieved the user by his ID',
+    type: ResponseUserDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with this ID does not exists.',
+        error: 'Not Found',
+      },
+    },
+  })
+  @Get(':id')
+  async findById(@Param('id') id: string): Promise<ResponseUserDto> {
+    return await this.userService.findById(id);
+  }  
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
@@ -120,78 +165,33 @@ export class UserController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ResponseUserDto> {
     return await this.userService.remove(id);
-  }
+  }  
 
-  @Public()
-  @ApiOperation({ summary: 'Get all users (paginated)' })
-  @ApiOkResponsePaginated(ResponseUserDto)
-  @Get()
-  async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
-  ): Promise<PaginatedUsersResponseDto> {
-    const baseUrl = this.requestCxt.getContext()?.full_url || '';
-    return this.userService.findAll(paginationQuery, baseUrl);
-  }
-
-  @ApiOperation({ summary: 'Get an user by his ID' })
+  @ApiOperation({ summary: 'Change user password' })
   @ApiOkResponse({
-    description: 'Successfully retrieved the user by his ID',
-    type: ResponseUserDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'User not found.',
+    description: 'Password successfully changed.',
     schema: {
       example: {
-        statusCode: 404,
-        message: 'User with this ID does not exists.',
-        error: 'Not Found',
+        message: 'Password successfully changed.',
       },
     },
   })
-  @Get(':id')
-  async findById(@Param('id') id: string): Promise<ResponseUserDto> {
-    return await this.userService.findById(id);
-  }
-
-  @ApiOperation({ summary: 'Get an user by his username' })
-  @ApiOkResponse({
-    description: 'Successfully retrieved the user by his username',
-    type: ResponseUserDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'User not found.',
+  @ApiUnauthorizedResponse({
+    description: 'Invalid current password.',
     schema: {
       example: {
-        statusCode: 404,
-        message: 'User with this username does not exists.',
-        error: 'Not Found',
+        statusCode: 401,
+        message: 'Current password is incorrect.',
+        error: 'Unauthorized',
       },
     },
   })
-  @Get('username/:username')
-  async findByUsername(
-    @Param('username') username: string,
-  ): Promise<ResponseUserDto> {
-    return await this.userService.findByUsername(username);
-  }
-
-  @ApiOperation({ summary: 'Get an user by his email' })
-  @ApiOkResponse({
-    description: 'Successfully retrieved the user by his email',
-    type: ResponseUserDto,
-  })
-  @ApiNotFoundResponse({
-    description: 'User not found.',
-    schema: {
-      example: {
-        statusCode: 404,
-        message: 'User with this email does not exists.',
-        error: 'Not Found',
-      },
-    },
-  })
-  @Get('email/:email')
-  async findByEmail(@Param('email') email: string): Promise<ResponseUserDto> {
-    return await this.userService.findByEmail(email);
-  }
+  @Patch('change-password')
+  async changePassword(
+    @CurrentUser() user: ITokenUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    await this.userService.changePassword(user.userId, changePasswordDto);
+    return { message: 'Password successfully changed.' };
+  }  
 }

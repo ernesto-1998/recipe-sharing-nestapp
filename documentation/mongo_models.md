@@ -38,7 +38,7 @@
 ```json
 {
   "_id": "ObjectId",
-  "authorId": "ObjectId",
+  "userId": "ObjectId",
   "title": "string",
   "description": "string",
   "ingredients": [

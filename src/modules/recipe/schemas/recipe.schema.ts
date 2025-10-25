@@ -9,7 +9,7 @@ export type RecipeDocument = HydratedDocument<Recipe>;
 @Schema({ timestamps: true })
 export class Recipe {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  authorId: Types.ObjectId;
+  userId: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
   title: string;
@@ -50,7 +50,7 @@ export const RecipeSchema = SchemaFactory.createForClass(Recipe);
 
 RecipeSchema.virtual('author', {
   ref: 'User',
-  localField: 'authorId',
+  localField: 'userId',
   foreignField: '_id',
   justOne: true,
 });

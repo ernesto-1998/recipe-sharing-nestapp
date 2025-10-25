@@ -12,7 +12,7 @@ export class AuthorForRecipeDto {
 
 export class ResponseRecipeDto extends OmitType(RecipeDto, [
   '__v',
-  'authorId',
+  'userId',
 ] as const) {
   @ApiProperty({ type: () => AuthorForRecipeDto })
   author?: AuthorForRecipeDto;

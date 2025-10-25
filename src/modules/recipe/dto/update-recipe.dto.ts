@@ -2,7 +2,7 @@ import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateRecipeDto } from './create-recipe.dto';
 
 export class UpdateRecipeDtoOmitted extends OmitType(CreateRecipeDto, [
-  'authorId',
+  'userId',
 ] as const) {}
 
 export class UpdateRecipeDto extends PartialType(UpdateRecipeDtoOmitted) {}

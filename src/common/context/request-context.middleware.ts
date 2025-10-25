@@ -7,7 +7,7 @@ import { IRequestContext } from './interfaces/request-context.interface';
 export class RequestContextMiddleware implements NestMiddleware {
   constructor(private readonly requestCtx: RequestContextService) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(req: Request, _res: Response, next: NextFunction) {
     const protocol = req?.protocol || null;
     const host = req.get('host');
 

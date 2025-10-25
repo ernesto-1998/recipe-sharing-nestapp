@@ -4,6 +4,7 @@ import { Recipe, RecipeDocument } from './schemas/recipe.schema';
 import { Model } from 'mongoose';
 import { CreateRecipeDto, UpdateRecipeDto } from './dto';
 import { flattenObject } from 'src/common/utils/flatten';
+import { PrivacyLevel } from 'src/common/enums';
 
 @Injectable()
 export class RecipeRepository {
@@ -20,15 +21,17 @@ export class RecipeRepository {
     limit?: number;
   } = {}): Promise<RecipeDocument[]> {
     return this.recipeModel
-      .find()
+      .find({
+        privacy: PrivacyLevel.PUBLIC,
+      })
       .skip(skip)
       .limit(limit)
       .populate('author', '_id username')
       .exec();
   }
 
-  findAllByAuthorId(
-    authorId: string,
+  findAllByUserId(
+    userId: string,
     {
       skip = 0,
       limit = 10,
@@ -39,7 +42,7 @@ export class RecipeRepository {
   ) {
     return this.recipeModel
       .find({
-        authorId: authorId,
+        userId: userId,
       })
       .skip(skip)
       .limit(limit)

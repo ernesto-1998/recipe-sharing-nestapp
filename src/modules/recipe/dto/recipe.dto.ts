@@ -37,7 +37,7 @@ export class RecipeDto {
     message:
       'The provided ID does not match the expected format for identifiers.',
   })
-  authorId: string;
+  userId: string;
 
   @ApiProperty({
     example: 'Tomato Soup',
