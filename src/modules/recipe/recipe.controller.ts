@@ -88,7 +88,7 @@ export class RecipeController {
   @Post()
   create(@Body() createRecipeDto: CreateRecipeDto): Promise<ResponseRecipeDto> {
     return this.recipeService.create(createRecipeDto);
-  }  
+  }
 
   @UseGuards(RecipeOwnerGuard)
   @ApiOperation({ summary: 'Update a recipe.' })

@@ -48,7 +48,7 @@ export class UserController {
   ): Promise<PaginatedUsersResponseDto> {
     const baseUrl = this.requestCxt.getContext()?.full_url || '';
     return this.userService.findAll(paginationQuery, baseUrl);
-  }  
+  }
 
   @ApiOperation({ summary: 'Get an user by his username' })
   @ApiOkResponse({
@@ -90,7 +90,7 @@ export class UserController {
   @Get('email/:email')
   async findByEmail(@Param('email') email: string): Promise<ResponseUserDto> {
     return await this.userService.findByEmail(email);
-  }  
+  }
 
   @ApiOperation({ summary: 'Get an user by his ID' })
   @ApiOkResponse({
@@ -110,7 +110,7 @@ export class UserController {
   @Get(':id')
   async findById(@Param('id') id: string): Promise<ResponseUserDto> {
     return await this.userService.findById(id);
-  }  
+  }
 
   @UseGuards(UserOwnerGuard)
   @ApiOperation({ summary: 'Update an user' })
@@ -165,7 +165,7 @@ export class UserController {
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<ResponseUserDto> {
     return await this.userService.remove(id);
-  }  
+  }
 
   @ApiOperation({ summary: 'Change user password' })
   @ApiOkResponse({
@@ -193,5 +193,5 @@ export class UserController {
   ): Promise<{ message: string }> {
     await this.userService.changePassword(user.userId, changePasswordDto);
     return { message: 'Password successfully changed.' };
-  }  
+  }
 }
