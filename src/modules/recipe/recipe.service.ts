@@ -14,11 +14,13 @@ import { Mapper } from 'src/common/utils/mapper';
 import { PaginationQueryDto } from 'src/common/dto';
 import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class RecipeService {
   constructor(
     private readonly recipeRepository: RecipeRepository,
+    private readonly userService: UserService,
     @Inject(CustomToken.APP_LOGGER) private readonly logger: AppLogger,
   ) {}
 
@@ -65,6 +67,12 @@ export class RecipeService {
   }
 
   async create(createRecipeDto: CreateRecipeDto): Promise<ResponseRecipeDto> {
+    const user = await this.userService.findById(createRecipeDto.userId);
+    if (!user) {
+      throw new NotFoundException(
+        `Author with ID ${createRecipeDto.userId} not found.`,
+      );
+    }
     const recipe = await this.recipeRepository.create(createRecipeDto);
     this.logger.log(
       {
