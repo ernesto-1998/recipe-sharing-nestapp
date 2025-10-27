@@ -35,8 +35,7 @@ export class RecipeService {
 
     const filter = buildRecipeFilter(query);
     const sort = buildRecipeSort(query);
-    console.log('Filter:', filter);
-    console.log('Sort:', sort);
+    
     const [recipes, total] = await Promise.all([
       this.recipeRepository.findAll({ filter, sort, skip, limit }),
       this.recipeRepository.count(filter),
