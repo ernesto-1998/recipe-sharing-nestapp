@@ -15,6 +15,8 @@ import { PaginationQueryDto } from 'src/common/dto';
 import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
 import { UserService } from '../user/user.service';
+import { RecipeFilterQueryDto } from './dto/recipe-filter-query.dto';
+import { buildRecipeFilter, buildRecipeSort } from './utils';
 
 @Injectable()
 export class RecipeService {
@@ -25,14 +27,19 @@ export class RecipeService {
   ) {}
 
   async findAll(
-    { page = 1, limit = 10 }: PaginationQueryDto,
+    query: RecipeFilterQueryDto,
     baseUrl: string,
   ): Promise<PaginatedRecipesResponseDto> {
+    const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
+    const filter = buildRecipeFilter(query);
+    const sort = buildRecipeSort(query);
+    console.log('Filter:', filter);
+    console.log('Sort:', sort);
     const [recipes, total] = await Promise.all([
-      this.recipeRepository.findAll({ skip, limit }),
-      this.recipeRepository.count(),
+      this.recipeRepository.findAll({ filter, sort, skip, limit }),
+      this.recipeRepository.count(filter),
     ]);
 
     return {
@@ -43,16 +50,16 @@ export class RecipeService {
 
   async findAllByUserId(
     userId: string,
-    { page = 1, limit = 10 }: PaginationQueryDto,
+    query: PaginationQueryDto,
     baseUrl: string,
   ): Promise<PaginatedRecipesResponseDto> {
+    const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
     const [recipes, total] = await Promise.all([
       this.recipeRepository.findAllByUserId(userId, { skip, limit }),
-      this.recipeRepository.count(),
+      this.recipeRepository.count({ userId }),
     ]);
-
     return {
       info: buildPaginationInfo(total, page, limit, baseUrl),
       results: Mapper.toResponseMany(ResponseRecipeDto, recipes),
@@ -66,7 +73,7 @@ export class RecipeService {
     return Mapper.toResponse(ResponseRecipeDto, recipe);
   }
 
-  async create(createRecipeDto: CreateRecipeDto): Promise<ResponseRecipeDto> {
+  async create(createRecipeDto: CreateRecipeDto & { userId: string }): Promise<ResponseRecipeDto> {
     const user = await this.userService.findById(createRecipeDto.userId);
     if (!user) {
       throw new NotFoundException(

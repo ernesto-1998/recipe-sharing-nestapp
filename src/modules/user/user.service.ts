@@ -31,9 +31,10 @@ export class UserService {
   ) {}
 
   async findAll(
-    { page = 1, limit = 10 }: PaginationQueryDto,
+    query: PaginationQueryDto,
     baseUrl: string,
   ): Promise<PaginatedUsersResponseDto> {
+    const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([

@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { CreateRecipeDto, UpdateRecipeDto } from './dto';
 import { flattenObject } from 'src/common/utils/flatten';
 import { PrivacyLevel } from 'src/common/enums';
+import { RecipeFilterObject, RecipeSortObject } from './types';
 
 @Injectable()
 export class RecipeRepository {
@@ -14,16 +15,22 @@ export class RecipeRepository {
   ) {}
 
   findAll({
+    filter,
+    sort,
     skip = 0,
     limit = 10,
   }: {
+    filter?: RecipeFilterObject;
+    sort?: RecipeSortObject;
     skip?: number;
     limit?: number;
   } = {}): Promise<RecipeDocument[]> {
     return this.recipeModel
       .find({
+        ...filter,
         privacy: PrivacyLevel.PUBLIC,
       })
+      .sort(sort)
       .skip(skip)
       .limit(limit)
       .populate('author', '_id username')
@@ -39,10 +46,10 @@ export class RecipeRepository {
       skip?: number;
       limit?: number;
     } = {},
-  ) {
+  ): Promise<RecipeDocument[]> {
     return this.recipeModel
       .find({
-        userId: userId,
+        userId,
       })
       .skip(skip)
       .limit(limit)
@@ -57,8 +64,13 @@ export class RecipeRepository {
       .exec();
   }
 
-  count(): Promise<number> {
-    return this.recipeModel.countDocuments().exec();
+  count(filter: RecipeFilterObject = {}): Promise<number> {
+    return this.recipeModel
+      .countDocuments({
+        ...filter,
+        privacy: PrivacyLevel.PUBLIC,
+      })
+      .exec();
   }
 
   create(createRecipeDto: CreateRecipeDto): Promise<RecipeDocument> {

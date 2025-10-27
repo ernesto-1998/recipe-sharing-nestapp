@@ -30,6 +30,7 @@ import { ApiOkResponsePaginated } from 'src/common/decorators/api-ok-response-pa
 import { RequestContextService } from 'src/common/context/request-context.service';
 import { CurrentUser } from '../auth/decorators';
 import type { ITokenUser } from '../auth/interfaces';
+import { ParseMongoIdPipe } from 'src/common/pipes';
 
 @ApiExtraModels(ErrorResponseDto)
 @Controller({ version: '1', path: 'users' })
@@ -108,7 +109,9 @@ export class UserController {
     },
   })
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<ResponseUserDto> {
+  async findById(
+    @Param('id', ParseMongoIdPipe) id: string,
+  ): Promise<ResponseUserDto> {
     return await this.userService.findById(id);
   }
 
@@ -140,7 +143,7 @@ export class UserController {
   })
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<ResponseUserDto> {
     return await this.userService.update(id, updateUserDto);
@@ -163,7 +166,9 @@ export class UserController {
     },
   })
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<ResponseUserDto> {
+  async remove(
+    @Param('id', ParseMongoIdPipe) id: string,
+  ): Promise<ResponseUserDto> {
     return await this.userService.remove(id);
   }
 

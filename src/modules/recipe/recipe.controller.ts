@@ -26,6 +26,10 @@ import {
 import { PaginationQueryDto } from 'src/common/dto';
 import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
 import { RecipeOwnerGuard } from 'src/common/guards/recipe-owner.guard';
+import { ParseMongoIdPipe } from 'src/common/pipes';
+import { RecipeFilterQueryDto } from './dto/recipe-filter-query.dto';
+import { CurrentUser } from '../auth/decorators';
+import type { ITokenUser } from '../auth/interfaces';
 
 @Controller({ version: '1', path: 'recipes' })
 export class RecipeController {
@@ -39,10 +43,10 @@ export class RecipeController {
   @ApiOkResponsePaginated(ResponseRecipeDto)
   @Get()
   async findAll(
-    @Query() paginationQuery: PaginationQueryDto,
+    @Query() recipeFilterQueryDto: RecipeFilterQueryDto,
   ): Promise<PaginatedRecipesResponseDto> {
     const baseUrl = this.requestCxt.getContext()?.full_url || '';
-    return this.recipeService.findAll(paginationQuery, baseUrl);
+    return this.recipeService.findAll(recipeFilterQueryDto, baseUrl);
   }
 
   @Public()
@@ -50,7 +54,7 @@ export class RecipeController {
   @ApiOkResponsePaginated(ResponseRecipeDto)
   @Get('author/:id')
   findAllByUserId(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Query() paginationQuery: PaginationQueryDto,
   ): Promise<PaginatedRecipesResponseDto> {
     const baseUrl = this.requestCxt.getContext()?.full_url || '';
@@ -73,11 +77,10 @@ export class RecipeController {
     },
   })
   @Get(':id')
-  findById(@Param('id') id: string) {
+  findById(@Param('id', ParseMongoIdPipe) id: string) {
     return this.recipeService.findById(id);
   }
 
-  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Creates a new recipe.' })
   @ApiCreatedResponse({
@@ -86,8 +89,8 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @Post()
-  create(@Body() createRecipeDto: CreateRecipeDto): Promise<ResponseRecipeDto> {
-    return this.recipeService.create(createRecipeDto);
+  create(@Body() createRecipeDto: CreateRecipeDto, @CurrentUser() user: ITokenUser): Promise<ResponseRecipeDto> {
+    return this.recipeService.create({...createRecipeDto, userId: user.userId});
   }
 
   @UseGuards(RecipeOwnerGuard)
@@ -107,7 +110,10 @@ export class RecipeController {
     },
   })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRecipeDto: UpdateRecipeDto) {
+  update(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body() updateRecipeDto: UpdateRecipeDto,
+  ) {
     return this.recipeService.update(id, updateRecipeDto);
   }
 
@@ -128,7 +134,7 @@ export class RecipeController {
     },
   })
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseMongoIdPipe) id: string) {
     return this.recipeService.remove(id);
   }
 }

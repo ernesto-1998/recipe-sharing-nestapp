@@ -57,3 +57,4 @@ RecipeSchema.virtual('author', {
 
 RecipeSchema.set('toJSON', { virtuals: true });
 RecipeSchema.set('toObject', { virtuals: true });
+RecipeSchema.set('id', false);
