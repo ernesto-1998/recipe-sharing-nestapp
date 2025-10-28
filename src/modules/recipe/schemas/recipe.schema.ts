@@ -29,13 +29,21 @@ export class Recipe {
   @Prop({ required: true })
   portions: number;
 
-  @Prop({ required: true })
+  @Prop({
+    required: true,
+    trim: true,
+    set: (value: string) => value.trim().toLowerCase(),
+  })
   category: string;
 
   @Prop({ type: [String], default: [] })
   images: string[];
 
-  @Prop({ type: [String], default: [] })
+  @Prop({
+    type: [String],
+    default: [],
+    set: (tags: string[]) => tags.map((t) => t.trim().toLowerCase()),
+  })
   tags: string[];
 
   @Prop({

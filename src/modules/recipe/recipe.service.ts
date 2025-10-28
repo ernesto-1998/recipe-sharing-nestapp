@@ -35,7 +35,7 @@ export class RecipeService {
 
     const filter = buildRecipeFilter(query);
     const sort = buildRecipeSort(query);
-    
+
     const [recipes, total] = await Promise.all([
       this.recipeRepository.findAll({ filter, sort, skip, limit }),
       this.recipeRepository.count(filter),
@@ -72,7 +72,9 @@ export class RecipeService {
     return Mapper.toResponse(ResponseRecipeDto, recipe);
   }
 
-  async create(createRecipeDto: CreateRecipeDto & { userId: string }): Promise<ResponseRecipeDto> {
+  async create(
+    createRecipeDto: CreateRecipeDto & { userId: string },
+  ): Promise<ResponseRecipeDto> {
     const user = await this.userService.findById(createRecipeDto.userId);
     if (!user) {
       throw new NotFoundException(

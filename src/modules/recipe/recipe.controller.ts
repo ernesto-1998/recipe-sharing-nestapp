@@ -89,8 +89,14 @@ export class RecipeController {
   })
   @ApiBadRequestResponse({ description: 'Invalid data.' })
   @Post()
-  create(@Body() createRecipeDto: CreateRecipeDto, @CurrentUser() user: ITokenUser): Promise<ResponseRecipeDto> {
-    return this.recipeService.create({...createRecipeDto, userId: user.userId});
+  create(
+    @Body() createRecipeDto: CreateRecipeDto,
+    @CurrentUser() user: ITokenUser,
+  ): Promise<ResponseRecipeDto> {
+    return this.recipeService.create({
+      ...createRecipeDto,
+      userId: user.userId,
+    });
   }
 
   @UseGuards(RecipeOwnerGuard)

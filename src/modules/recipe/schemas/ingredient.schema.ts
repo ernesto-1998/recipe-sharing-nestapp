@@ -3,7 +3,7 @@ import { Unit } from 'src/common/enums/ingredient-units.enum';
 
 @Schema({ _id: false })
 export class Ingredient {
-  @Prop({ required: true })
+  @Prop({ required: true, set: (value: string) => value.trim().toLowerCase() })
   name: string;
 
   @Prop({ required: true })
