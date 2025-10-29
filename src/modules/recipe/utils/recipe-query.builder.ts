@@ -2,13 +2,13 @@ import { RecipeFilterQueryDto } from '../dto/recipe-filter-query.dto';
 import { PrivacyLevel, SortOrder } from 'src/common/enums';
 import { RecipeSortKeys } from '../enum';
 import { RecipeFilterObject, RecipeSortObject } from '../types';
+import { MyRecipesFilterQueryDto } from '../dto';
 
 export const buildRecipeFilter = (
-  filters: RecipeFilterQueryDto,
+  filters: RecipeFilterQueryDto | MyRecipesFilterQueryDto,
 ): RecipeFilterObject => {
   const {
     search,
-    userId,
     category,
     ingredients,
     tags,
@@ -17,6 +17,9 @@ export const buildRecipeFilter = (
     portionsLte,
     portionsGte,
   } = filters;
+
+  const userId = 'userId' in filters ? filters.userId : undefined;
+  const privacy = 'privacy' in filters ? filters.privacy : undefined;
 
   const filter: RecipeFilterObject = {};
 
@@ -27,7 +30,7 @@ export const buildRecipeFilter = (
     ];
   }
 
-  if (userId) filter.userId = userId;
+  if (userId !== undefined) filter.userId = userId;
   if (category) filter.category = category;
 
   if (ingredients?.length) filter['ingredients.name'] = { $all: ingredients };
@@ -45,7 +48,9 @@ export const buildRecipeFilter = (
     if (portionsLte) filter.portions.$lte = portionsLte;
   }
 
-  filter.privacy = PrivacyLevel.PUBLIC;
+  if (privacy !== undefined) {
+    filter.privacy = privacy;
+  }
 
   return filter;
 };

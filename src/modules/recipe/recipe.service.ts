@@ -8,8 +8,8 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import { RecipeRepository } from './recipe.repository';
 import type { AppLogger } from 'src/common/interfaces';
-import { CustomToken } from 'src/common/enums';
-import { ResponseRecipeDto } from './dto';
+import { CustomToken, PrivacyLevel } from 'src/common/enums';
+import { MyRecipesFilterQueryDto, ResponseRecipeDto } from './dto';
 import { Mapper } from 'src/common/utils/mapper';
 import { PaginationQueryDto } from 'src/common/dto';
 import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
@@ -35,6 +35,7 @@ export class RecipeService {
 
     const filter = buildRecipeFilter(query);
     const sort = buildRecipeSort(query);
+    filter.privacy = PrivacyLevel.PUBLIC;
 
     const [recipes, total] = await Promise.all([
       this.recipeRepository.findAll({ filter, sort, skip, limit }),
@@ -47,17 +48,21 @@ export class RecipeService {
     };
   }
 
-  async findAllByUserId(
+  async findAllMine(
     userId: string,
-    query: PaginationQueryDto,
+    query: MyRecipesFilterQueryDto,
     baseUrl: string,
   ): Promise<PaginatedRecipesResponseDto> {
     const { page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
 
+    const filter = buildRecipeFilter(query);
+    const sort = buildRecipeSort(query);
+    filter.userId = userId;
+
     const [recipes, total] = await Promise.all([
-      this.recipeRepository.findAllByUserId(userId, { skip, limit }),
-      this.recipeRepository.count({ userId }),
+      this.recipeRepository.findAll({ filter, sort, skip, limit }),
+      this.recipeRepository.count(filter),
     ]);
     return {
       info: buildPaginationInfo(total, page, limit, baseUrl),

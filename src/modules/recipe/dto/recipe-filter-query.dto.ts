@@ -18,11 +18,6 @@ export class RecipeFilterQueryDto
   extends PaginationQueryDto
   implements ISortQuery<RecipeSortKeys>
 {
-  /*   @ApiPropertyOptional({ description: 'Filter by recipe title' })
-  @IsOptional()
-  @IsString()
-  title?: string; */
-
   @ApiPropertyOptional({
     description: 'Search in title and description',
     example: 'chocolate cake',
@@ -41,13 +36,6 @@ export class RecipeFilterQueryDto
   @IsString()
   category?: string;
 
-  /*   @ApiPropertyOptional({
-    description: 'Filter by ingredients (comma-separated list)',
-  })
-  @IsOptional()
-  @IsString()
-  ingredients?: string; */
-
   @ApiPropertyOptional({
     description: 'Filter by ingredients (comma-separated)',
     example: 'tomato,cheese,basil',
@@ -64,11 +52,6 @@ export class RecipeFilterQueryDto
     return Array.isArray(value) ? value : [];
   })
   ingredients?: string[];
-
-  /*   @ApiPropertyOptional({ description: 'Filter by tags (comma-separated list)' })
-  @IsOptional()
-  @IsString()
-  tags?: string; */
 
   @ApiPropertyOptional({
     description: 'Filter by tags (comma-separated)',
@@ -87,28 +70,28 @@ export class RecipeFilterQueryDto
   })
   tags?: string[];
 
-  @ApiPropertyOptional({ description: 'Maximum preparation time' })
+  @ApiPropertyOptional({ description: 'Maximum preparation time (In Seconds)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
   prepTimeLte?: number;
 
-  @ApiPropertyOptional({ description: 'Minimum preparation time' })
+  @ApiPropertyOptional({ description: 'Minimum preparation time (In Seconds)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
   prepTimeGte?: number;
 
-  @ApiPropertyOptional({ description: 'Maximum number of portions' })
+  @ApiPropertyOptional({ description: 'Maximum number of portions (Integer)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
   portionsLte?: number;
 
-  @ApiPropertyOptional({ description: 'Minimum number of portions' })
+  @ApiPropertyOptional({ description: 'Minimum number of portions (Integer)' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()

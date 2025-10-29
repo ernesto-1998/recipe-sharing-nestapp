@@ -12,7 +12,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RecipeService } from './recipe.service';
-import { CreateRecipeDto, ResponseRecipeDto } from './dto';
+import {
+  CreateRecipeDto,
+  MyRecipesFilterQueryDto,
+  ResponseRecipeDto,
+} from './dto';
 import { UpdateRecipeDto } from './dto';
 import { RequestContextService } from 'src/common/context/request-context.service';
 import { ApiOkResponsePaginated, Public } from 'src/common/decorators';
@@ -23,7 +27,6 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { PaginationQueryDto } from 'src/common/dto';
 import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
 import { RecipeOwnerGuard } from 'src/common/guards/recipe-owner.guard';
 import { ParseMongoIdPipe } from 'src/common/pipes';
@@ -49,16 +52,21 @@ export class RecipeController {
     return this.recipeService.findAll(recipeFilterQueryDto, baseUrl);
   }
 
-  @Public()
-  @ApiOperation({ summary: 'Get all recipes by author (paginated)' })
+  @ApiOperation({
+    summary: 'Get all recipes of the authenticated user (paginated)',
+  })
   @ApiOkResponsePaginated(ResponseRecipeDto)
-  @Get('author/:id')
-  findAllByUserId(
-    @Param('id', ParseMongoIdPipe) id: string,
-    @Query() paginationQuery: PaginationQueryDto,
+  @Get('me')
+  findAllMine(
+    @Query() myRecipesFilterQueryto: MyRecipesFilterQueryDto,
+    @CurrentUser() { userId }: ITokenUser,
   ): Promise<PaginatedRecipesResponseDto> {
     const baseUrl = this.requestCxt.getContext()?.full_url || '';
-    return this.recipeService.findAllByUserId(id, paginationQuery, baseUrl);
+    return this.recipeService.findAllMine(
+      userId,
+      myRecipesFilterQueryto,
+      baseUrl,
+    );
   }
 
   @ApiOperation({ summary: 'Get a recipe by his ID.' })
@@ -91,11 +99,11 @@ export class RecipeController {
   @Post()
   create(
     @Body() createRecipeDto: CreateRecipeDto,
-    @CurrentUser() user: ITokenUser,
+    @CurrentUser() { userId }: ITokenUser,
   ): Promise<ResponseRecipeDto> {
     return this.recipeService.create({
       ...createRecipeDto,
-      userId: user.userId,
+      userId: userId,
     });
   }
 

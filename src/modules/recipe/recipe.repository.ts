@@ -4,7 +4,6 @@ import { Recipe, RecipeDocument } from './schemas/recipe.schema';
 import { Model } from 'mongoose';
 import { CreateRecipeDto, UpdateRecipeDto } from './dto';
 import { flattenObject } from 'src/common/utils/flatten';
-import { PrivacyLevel } from 'src/common/enums';
 import { RecipeFilterObject, RecipeSortObject } from './types';
 
 @Injectable()
@@ -28,29 +27,8 @@ export class RecipeRepository {
     return this.recipeModel
       .find({
         ...filter,
-        privacy: PrivacyLevel.PUBLIC,
       })
       .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .populate('author', '_id username')
-      .exec();
-  }
-
-  findAllByUserId(
-    userId: string,
-    {
-      skip = 0,
-      limit = 10,
-    }: {
-      skip?: number;
-      limit?: number;
-    } = {},
-  ): Promise<RecipeDocument[]> {
-    return this.recipeModel
-      .find({
-        userId,
-      })
       .skip(skip)
       .limit(limit)
       .populate('author', '_id username')
@@ -68,7 +46,6 @@ export class RecipeRepository {
     return this.recipeModel
       .countDocuments({
         ...filter,
-        privacy: PrivacyLevel.PUBLIC,
       })
       .exec();
   }
