@@ -179,6 +179,10 @@ describe('UserController', () => {
 
       expect(result).toEqual(mockPaginatedUsers);
       expect(userService.findAll).toHaveBeenCalled();
+      expect(userService.findAll).toHaveBeenCalledWith(
+        { page: 1, limit: 10 },
+        'http://localhost:5000/users',
+      );
       expect(requestContextService.getContext).toHaveBeenCalled();
     });
   });
