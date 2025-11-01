@@ -3,9 +3,12 @@ import { RecipeController } from '../recipe.controller';
 import { RecipeService } from '../recipe.service';
 import { RequestContextService } from 'src/common/context/request-context.service';
 import {
+  mockCreateRecipe,
   mockPaginatedRecipes,
   mockRecipe,
   mockResponseRecipe,
+  mockResponseUpdatedRecipe,
+  mockUpdateRecipe,
 } from 'src/common/mocks/recipe';
 import { RecipeOwnerGuard } from 'src/common/guards/recipe-owner.guard';
 import { NotFoundException } from '@nestjs/common';
@@ -143,6 +146,128 @@ describe('RecipeController', () => {
       );
 
       expect(recipeService.findById).toHaveBeenCalledWith(
+        '60f8c0e2e2a2c2a4d8e2e2b3',
+      );
+    });
+  });
+
+  describe('create', () => {
+    it('should create and return a new recipe', async () => {
+      recipeService.create.mockResolvedValueOnce(mockResponseRecipe);
+      const user = {
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
+        isSuperUser: false,
+      };
+      const result = await recipeController.create(mockCreateRecipe, user);
+
+      expect(result).toEqual(mockResponseRecipe);
+      expect(recipeService.create).toHaveBeenCalledWith({
+        ...mockCreateRecipe,
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+      });
+    });
+
+    it('should throw NotFoundException if author user is not found', async () => {
+      recipeService.create.mockRejectedValue(
+        new NotFoundException(
+          'Author with ID 60f7c0e2e2a2c2a4d8e2e2a2 not found.',
+        ),
+      );
+      const user = {
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
+        isSuperUser: false,
+      };
+
+      await expect(
+        recipeController.create(mockCreateRecipe, user),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        recipeController.create(mockCreateRecipe, user),
+      ).rejects.toThrow('Author with ID 60f7c0e2e2a2c2a4d8e2e2a2 not found.');
+
+      expect(recipeService.create).toHaveBeenCalledWith({
+        ...mockCreateRecipe,
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+      });
+    });
+  });
+
+  describe('update', () => {
+    it('should update and return the recipe', async () => {
+      recipeService.update.mockResolvedValueOnce(mockResponseUpdatedRecipe);
+      const result = await recipeController.update(
+        mockRecipe._id,
+        mockUpdateRecipe,
+      );
+
+      expect(result).toEqual({
+        ...mockResponseRecipe,
+        description:
+          'Un desayuno delicioso y saludable con pan tostado y aguacate.',
+        prepTime: 700,
+        tags: ['rápido', 'saludable', 'vegetariano', 'fácil'],
+      });
+      expect(recipeService.update).toHaveBeenCalledWith(
+        '60f8c0e2e2a2c2a4d8e2e2b3',
+        {
+          description:
+            'Un desayuno delicioso y saludable con pan tostado y aguacate.',
+          prepTime: 700,
+          tags: ['rápido', 'saludable', 'vegetariano', 'fácil'],
+        },
+      );
+    });
+
+    it('should throw NotFoundException if recipe to update is not found', async () => {
+      recipeService.update.mockRejectedValue(
+        new NotFoundException('This recipe does not exists.'),
+      );
+
+      await expect(
+        recipeController.update(mockRecipe._id, mockUpdateRecipe),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        recipeController.update(mockRecipe._id, mockUpdateRecipe),
+      ).rejects.toThrow('This recipe does not exists.');
+
+      expect(recipeService.update).toHaveBeenCalledWith(
+        '60f8c0e2e2a2c2a4d8e2e2b3',
+        {
+          description:
+            'Un desayuno delicioso y saludable con pan tostado y aguacate.',
+          prepTime: 700,
+          tags: ['rápido', 'saludable', 'vegetariano', 'fácil'],
+        },
+      );
+    });
+  });
+
+  describe('remove', () => {
+    it('should remove and return the deleted recipe', async () => {
+      recipeService.remove.mockResolvedValueOnce(mockResponseRecipe);
+      const result = await recipeController.remove(mockRecipe._id);
+
+      expect(result).toEqual(mockResponseRecipe);
+      expect(recipeService.remove).toHaveBeenCalledWith(
+        '60f8c0e2e2a2c2a4d8e2e2b3',
+      );
+    });
+
+    it('should throw NotFoundException if recipe to delete is not found', async () => {
+      recipeService.remove.mockRejectedValue(
+        new NotFoundException('This recipe does not exists.'),
+      );
+
+      await expect(recipeController.remove(mockRecipe._id)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(recipeController.remove(mockRecipe._id)).rejects.toThrow(
+        'This recipe does not exists.',
+      );
+
+      expect(recipeService.remove).toHaveBeenCalledWith(
         '60f8c0e2e2a2c2a4d8e2e2b3',
       );
     });

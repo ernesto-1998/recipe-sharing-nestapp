@@ -69,6 +69,138 @@ describe('UserController', () => {
     expect(userController).toBeDefined();
   });
 
+  describe('findAll', () => {
+    it('should return an array of users', async () => {
+      userService.findAll.mockResolvedValue(mockPaginatedUsers);
+
+      const result = await userController.findAll({ page: 1, limit: 10 });
+
+      expect(result).toEqual({
+        info: {
+          count: 1,
+          pages: 1,
+          next: null,
+          prev: null,
+        },
+        results: [mockResponseUser],
+      });
+      expect(userService.findAll).toHaveBeenCalled();
+      expect(userService.findAll).toHaveBeenCalledWith(
+        { page: 1, limit: 10 },
+        'http://localhost:5000/users',
+      );
+      expect(requestContextService.getContext).toHaveBeenCalled();
+    });
+  });
+
+  describe('findById', () => {
+    it('should return a user by ID', async () => {
+      userService.findById.mockResolvedValue(mockResponseUser);
+
+      const result = await userController.findById(mockResponseUser._id);
+
+      expect(result).toEqual({
+        _id: '60f7c0e2e2a2c2a4d8e2e2a2',
+        email: 'robert@example.com',
+        username: 'robert123',
+        role: 'user',
+        profile: {},
+        createdAt: mockResponseUser.createdAt,
+        updatedAt: mockResponseUser.updatedAt,
+      });
+      expect(userService.findById).toHaveBeenCalledWith(
+        '60f7c0e2e2a2c2a4d8e2e2a2',
+      );
+    });
+
+    it('should throw NotFoundException if user is not found by ID', async () => {
+      userService.findById.mockRejectedValue(
+        new NotFoundException('User with this ID does not exists.'),
+      );
+
+      await expect(
+        userController.findById(mockResponseUser._id),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        userController.findById(mockResponseUser._id),
+      ).rejects.toThrow('User with this ID does not exists.');
+
+      expect(userService.findById).toHaveBeenCalledWith(
+        '60f7c0e2e2a2c2a4d8e2e2a2',
+      );
+    });
+  });
+
+  describe('findByUsername', () => {
+    it('should return a user by username', async () => {
+      userService.findByUsername.mockResolvedValue(mockResponseUser);
+
+      const result = await userController.findByUsername(
+        mockResponseUser.username,
+      );
+
+      expect(result).toEqual({
+        _id: '60f7c0e2e2a2c2a4d8e2e2a2',
+        email: 'robert@example.com',
+        username: 'robert123',
+        role: 'user',
+        profile: {},
+        createdAt: mockResponseUser.createdAt,
+        updatedAt: mockResponseUser.updatedAt,
+      });
+      expect(userService.findByUsername).toHaveBeenCalledWith('robert123');
+    });
+
+    it('should throw NotFoundException if user is not found by username', async () => {
+      userService.findByUsername.mockRejectedValue(
+        new NotFoundException('User with this username does not exists.'),
+      );
+
+      await expect(
+        userController.findByUsername('nonExistentUser'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(userService.findByUsername).toHaveBeenCalledWith(
+        'nonExistentUser',
+      );
+    });
+  });
+
+  describe('findByEmail', () => {
+    it('should return a user by email', async () => {
+      userService.findByEmail.mockResolvedValue(mockResponseUser);
+
+      const result = await userController.findByEmail(mockResponseUser.email);
+
+      expect(result).toEqual({
+        _id: '60f7c0e2e2a2c2a4d8e2e2a2',
+        email: 'robert@example.com',
+        username: 'robert123',
+        role: 'user',
+        profile: {},
+        createdAt: mockResponseUser.createdAt,
+        updatedAt: mockResponseUser.updatedAt,
+      });
+      expect(userService.findByEmail).toHaveBeenCalledWith(
+        'robert@example.com',
+      );
+    });
+
+    it('should throw NotFoundException if user is not found by email', async () => {
+      userService.findByEmail.mockRejectedValue(
+        new NotFoundException('User with this email does not exists.'),
+      );
+
+      await expect(
+        userController.findByEmail('nonexistent@example.com'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(userService.findByEmail).toHaveBeenCalledWith(
+        'nonexistent@example.com',
+      );
+    });
+  });
+
   describe('update', () => {
     it('should update and return the updated user', async () => {
       userService.update.mockResolvedValue(mockUpdatedUser);
@@ -111,8 +243,11 @@ describe('UserController', () => {
       );
 
       expect(userService.changePassword).toHaveBeenCalledWith(
-        mockTokenUser.userId,
-        mockChangePassword,
+        '60f7c0e2e2a2c2a4d8e2e2a2',
+        {
+          currentPassword: 'hashedPassword',
+          newPassword: 'newPassword123',
+        },
       );
       expect(result).toEqual({ message: 'Password successfully changed.' });
     });
@@ -127,8 +262,11 @@ describe('UserController', () => {
       ).rejects.toThrow(NotFoundException);
 
       expect(userService.changePassword).toHaveBeenCalledWith(
-        mockTokenUser.userId,
-        mockChangePassword,
+        '60f7c0e2e2a2c2a4d8e2e2a2',
+        {
+          currentPassword: 'hashedPassword',
+          newPassword: 'newPassword123',
+        },
       );
     });
 
@@ -142,8 +280,11 @@ describe('UserController', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(userService.changePassword).toHaveBeenCalledWith(
-        mockTokenUser.userId,
-        mockChangePassword,
+        '60f7c0e2e2a2c2a4d8e2e2a2',
+        {
+          currentPassword: 'hashedPassword',
+          newPassword: 'newPassword123',
+        },
       );
     });
   });
@@ -168,104 +309,6 @@ describe('UserController', () => {
       );
 
       expect(userService.remove).toHaveBeenCalledWith('nonExistentId');
-    });
-  });
-
-  describe('findAll', () => {
-    it('should return an array of users', async () => {
-      userService.findAll.mockResolvedValue(mockPaginatedUsers);
-
-      const result = await userController.findAll({ page: 1, limit: 10 });
-
-      expect(result).toEqual(mockPaginatedUsers);
-      expect(userService.findAll).toHaveBeenCalled();
-      expect(userService.findAll).toHaveBeenCalledWith(
-        { page: 1, limit: 10 },
-        'http://localhost:5000/users',
-      );
-      expect(requestContextService.getContext).toHaveBeenCalled();
-    });
-  });
-
-  describe('findById', () => {
-    it('should return a user by ID', async () => {
-      userService.findById.mockResolvedValue(mockResponseUser);
-
-      const result = await userController.findById(mockResponseUser._id);
-
-      expect(result).toEqual(mockResponseUser);
-      expect(userService.findById).toHaveBeenCalledWith(mockResponseUser._id);
-    });
-
-    it('should throw NotFoundException if user is not found by ID', async () => {
-      userService.findById.mockRejectedValue(
-        new NotFoundException('User with this ID does not exists.'),
-      );
-
-      await expect(
-        userController.findById(mockResponseUser._id),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        userController.findById(mockResponseUser._id),
-      ).rejects.toThrow('User with this ID does not exists.');
-
-      expect(userService.findById).toHaveBeenCalledWith(mockResponseUser._id);
-    });
-  });
-
-  describe('findByUsername', () => {
-    it('should return a user by username', async () => {
-      userService.findByUsername.mockResolvedValue(mockResponseUser);
-
-      const result = await userController.findByUsername(
-        mockResponseUser.username,
-      );
-
-      expect(result).toEqual(mockResponseUser);
-      expect(userService.findByUsername).toHaveBeenCalledWith(
-        mockResponseUser.username,
-      );
-    });
-
-    it('should throw NotFoundException if user is not found by username', async () => {
-      userService.findByUsername.mockRejectedValue(
-        new NotFoundException('User with this username does not exists.'),
-      );
-
-      await expect(
-        userController.findByUsername('nonExistentUser'),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(userService.findByUsername).toHaveBeenCalledWith(
-        'nonExistentUser',
-      );
-    });
-  });
-
-  describe('findByEmail', () => {
-    it('should return a user by email', async () => {
-      userService.findByEmail.mockResolvedValue(mockResponseUser);
-
-      const result = await userController.findByEmail(mockResponseUser.email);
-
-      expect(result).toEqual(mockResponseUser);
-      expect(userService.findByEmail).toHaveBeenCalledWith(
-        mockResponseUser.email,
-      );
-    });
-
-    it('should throw NotFoundException if user is not found by email', async () => {
-      userService.findByEmail.mockRejectedValue(
-        new NotFoundException('User with this email does not exists.'),
-      );
-
-      await expect(
-        userController.findByEmail('nonexistent@example.com'),
-      ).rejects.toThrow(NotFoundException);
-
-      expect(userService.findByEmail).toHaveBeenCalledWith(
-        'nonexistent@example.com',
-      );
     });
   });
 });

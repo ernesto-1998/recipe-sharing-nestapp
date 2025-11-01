@@ -62,8 +62,16 @@ describe('AuthController', () => {
 
       const result = await authController.login(mockLoginBody, mockTokenUser);
 
-      expect(authService.logIn).toHaveBeenCalledWith(mockTokenUser);
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual({
+        accessToken: 'mock.token.value',
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
+      });
+      expect(authService.logIn).toHaveBeenCalledWith({
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
+        isSuperUser: false,
+      });
     });
   });
 
@@ -73,8 +81,22 @@ describe('AuthController', () => {
 
       const result = await authController.create(mockCreateUser);
 
-      expect(result).toEqual(mockResponseUser);
-      expect(userService.create).toHaveBeenCalledWith(mockCreateUser);
+      expect(result).toEqual({
+        _id: '60f7c0e2e2a2c2a4d8e2e2a2',
+        email: 'robert@example.com',
+        username: 'robert123',
+        role: 'user',
+        profile: {},
+        createdAt: mockResponseUser.createdAt,
+        updatedAt: mockResponseUser.updatedAt,
+      });
+      expect(userService.create).toHaveBeenCalledWith({
+        email: 'robert@example.com',
+        username: 'robert123',
+        password: 'hashedPassword',
+        role: 'user',
+        profile: {},
+      });
     });
 
     it('should throw ConflictException if user creation fails due to conflict', async () => {
@@ -89,7 +111,13 @@ describe('AuthController', () => {
         'User with this email already exists.',
       );
 
-      expect(userService.create).toHaveBeenCalledWith(mockCreateUser);
+      expect(userService.create).toHaveBeenCalledWith({
+        email: 'robert@example.com',
+        username: 'robert123',
+        password: 'hashedPassword',
+        role: 'user',
+        profile: {},
+      });
     });
   });
 });

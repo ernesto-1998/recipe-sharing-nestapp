@@ -1,99 +1,267 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🍳 Recipe Sharing REST API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A **NestJS-based RESTful API** for a **Recipe Sharing Platform**, where users can create, explore, and share cooking recipes.  
+The project is designed with a **modular architecture**, **robust authentication**, **structured logging**, and **scalability** in mind.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This API is currently under active development, with future plans including **OAuth2 authentication with Google**, **commenting system**, and **user social interactions**.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🚀 Features
 
-## Project setup
+- User registration and authentication (JWT)
+- Role-based access control and privacy settings
+- Recipe management (CRUD)
+- Pagination, filtering, and case-insensitive search
+- Detailed request logging and async context tracking
+- Swagger documentation
+- Dual database setup (MongoDB + PostgreSQL)
+- Dockerized environment for easy deployment
 
-```bash
-$ npm install
+---
+
+## 🧩 Architecture Overview
+
+The application is structured in **independent, feature-based modules**, each handling a specific domain or concern.  
+All modules are wired together through **NestJS dependency injection**, ensuring scalability and testability.
+
+## 🧭 Roadmap
+
+- [✔️] **Integration & Unit Testing**
+- [✔️] **User Modules**
+- [✔️] **Auth Module**
+- [✔️] **Recipe CRUD Module**
+- [✔️] **Logger + Context Modules**
+- [ ] **Comment Module**
+- [ ] **Favorite Recipes**
+- [ ] **Search History**
+- [ ] **Reports & Moderation**
+- [ ] **OAuth2 with Google**
+- [ ] **User follower functionality**
+
+## 🧠 Core Modules
+
+#### **Auth Module**
+- Handles authentication using **email/password** via Passport local strategy.
+- Issues **JWT tokens** for secure session management.
+- Includes login and registration endpoints.
+- Designed to integrate future **Google OAuth2** authentication.
+
+#### **User Module**
+- Manages user profiles, roles, and privacy settings.
+- Provides endpoints to retrieve and update user data.
+- Supports nested structures such as social networks and addresses.
+
+#### **Recipe Module**
+- Central module of the platform.
+- Allows users to **create, update, delete, and explore recipes**.
+- Each recipe includes ingredients, steps, categories, tags, and privacy configuration.
+- Implements pagination, filtering, and query-based search.
+- Supports population of author data using Mongoose virtuals.
+
+#### **Comments Module**
+- Manages the interaction between users and recipes through **comments and ratings**.
+- Allows users to **post, update, and delete comments** on public or authorized recipes.
+- Supports a **rating system** (1 to 5 stars) to evaluate recipe quality.
+- Each comment stores the **author reference**, **recipe reference**, and **timestamp**.
+- Designed to integrate seamlessly with the **Recipe Module** for displaying community feedback.
+- In future updates, moderation and report features will be implemented.
+
+---
+
+## 🧰 Common Modules
+
+#### **Logger Module**
+- Custom logging service that stores logs in **PostgreSQL**.
+- Captures details such as HTTP method, request path, user info, and stack traces.
+- Supports multiple log levels (info, warn, error, debug).
+
+#### **Context Module**
+- Uses **asynchronous local storage** to maintain contextual information per request.
+- Passes request metadata automatically to the Logger module for enhanced observability.
+- Metadata includes protocol, host, route, HTTP method, authenticated user, and more.
+
+---
+
+## 🗃️ Databases
+
+The API uses a **dual-database approach** for optimal separation of concerns:
+
+| Database | Purpose | Technology |
+|-----------|----------|------------|
+| **MongoDB** | Stores domain entities such as users, recipes, and comments. | Mongoose ODM |
+| **PostgreSQL** | Dedicated to structured logging and analytics data. | PG |
+
+This setup allows **high performance** for document-heavy data (recipes, comments) and **strong consistency** for logs and operational metrics.
+
+---
+
+## 📦 Entities Overview
+
+### 👤 User
+```json
+{
+  "_id": "ObjectId",
+  "email": "string",
+  "username": "string",
+  "password": "string",
+  "role": "string",
+  "privacy": "public | private",
+  "profile": {
+    "firstname": "string",
+    "lastname": "string",
+    "biography": "string",
+    "avatar": "string",
+    "birthDate": "Date",
+    "socialNetworks": {
+      "instagram": "string",
+      "youtube": "string",
+      "x": "string",
+      "facebook": "string"
+    },
+    "address": {
+      "country": "string"
+    }
+  },
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
 ```
 
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+### 👤 Recipes
+```json
+{
+  "_id": "ObjectId",
+  "userId": "ObjectId",
+  "title": "string",
+  "description": "string",
+  "ingredients": [
+    {
+      "name": "string",
+      "quantity": "string",
+      "unit": "kg | gr | onz | pound..."
+    }
+  ],
+  "steps": [
+    {
+      "order": "number",
+      "instruction": "string"
+    }
+  ],
+  "prepTime": "number",
+  "portions": "number",
+  "category": "string",
+  "images": ["string"],
+  "tags": ["string"],
+  "privacy": "public | private",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+### 👤 Comments
+```json
+{
+  "_id": "ObjectId",
+  "recipeId": "ObjectId",
+  "userId": "ObjectId",
+  "text": "string",
+  "rating": "number",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
 ```
 
-## Deployment
+## ⚙️ Environment Variables
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Before running the application, create a `.env` file in the root directory with the following variables:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```env
+# App Configuration
+APP_PORT=5000
 
-```bash
-$ npm install -g mau
-$ mau deploy
+# MongoDB Configuration
+# (Used for the main application data — recipes, users, comments, etc.)
+MONGO_USER=recipeUser
+MONGO_PASSWORD=recipePass
+MONGO_PORT=27017
+MONGO_HOST=localhost
+MONGO_DATABASE=recipeDB
+
+# PostgreSQL Configuration
+# (Used for logging and application context metadata)
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=neto
+POSTGRES_PASSWORD=neto
+POSTGRES_DB=recipe_logs_db
+
+# JWT Configuration
+JWT_SECRET=EXC'89&&55jkl'
+
+# Rate Limiting
+RATE_LIMIT_TTL=60000
+RATE_LIMIT_LIMIT=100
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## ⚙️ Installation & Running Locally
 
-## Resources
+### 1. Clone the repository
+```bash
+git clone https://github.com/ernesto-1998/recipe-sharing-nestapp.git
+cd recipe-sharing-nestapp
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 2. Start the containers
+#### The project includes a docker-compose.yml file to spin up the required databases.
+```bash
+docker-compose up -d
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 3. Install dependencies
+```bash
+npm install
+```
 
-## Support
+### 4. Start the development server
+```bash
+npm run start:dev
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 5. Access the Swagger documentation
+```bash
+http://localhost:{APP_PORT}/api
+```
 
-## Stay in touch
+## 🧰 Tech Stack
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+| **Category** | **Technologies** |
+|---------------|------------------|
+| **Language** | TypeScript |
+| **Framework** | NestJS |
+| **Databases** | MongoDB, PostgreSQL |
+| **Authentication** | JWT, Local Strategy |
+| **Containerization** | Docker, Docker Compose |
+| **ORM/ODM** | Mongoose |
+| **Documentation** | Swagger |
+| **Logging** | Custom Logger Module + PostgreSQL |
+| **Platform** | Node.js |
+| **Future Enhancements** | OAuth2 (Google), Comments, Favorites, Ratings |
 
-## License
+## 🧑‍💻 Author
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**Ernesto Magaña**  
+Software Engineer | Node.js & NestJS Developer  
+🔗 [GitHub Profile](https://github.com/ernesto-1998)
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
+
+
+
+
+
+
