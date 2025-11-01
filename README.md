@@ -25,19 +25,24 @@ This API is currently under active development, with future plans including **OA
 The application is structured in **independent, feature-based modules**, each handling a specific domain or concern.  
 All modules are wired together through **NestJS dependency injection**, ensuring scalability and testability.
 
+---
+
 ## 🧭 Roadmap
 
 - [✔️] **Integration & Unit Testing**
-- [✔️] **User Modules**
+- [✔️] **User Module**
 - [✔️] **Auth Module**
-- [✔️] **Recipe CRUD Module**
-- [✔️] **Logger + Context Modules**
+- [✔️] **Recipe Module**
+- [✔️] **Logger Module**
+- [✔️] **Context Module**
 - [ ] **Comment Module**
 - [ ] **Favorite Recipes**
 - [ ] **Search History**
 - [ ] **Reports & Moderation**
 - [ ] **OAuth2 with Google**
 - [ ] **User follower functionality**
+
+---
 
 ## 🧠 Core Modules
 
@@ -172,6 +177,8 @@ This setup allows **high performance** for document-heavy data (recipes, comment
 }
 ```
 
+---
+
 ## ⚙️ Environment Variables
 
 Before running the application, create a `.env` file in the root directory with the following variables:
@@ -204,6 +211,8 @@ RATE_LIMIT_TTL=60000
 RATE_LIMIT_LIMIT=100
 ```
 
+---
+
 ## ⚙️ Installation & Running Locally
 
 ### 1. Clone the repository
@@ -233,6 +242,8 @@ npm run start:dev
 http://localhost:{APP_PORT}/api
 ```
 
+---
+
 ## 🧰 Tech Stack
 
 | **Category** | **Technologies** |
@@ -248,6 +259,8 @@ http://localhost:{APP_PORT}/api
 | **Platform** | Node.js |
 | **Future Enhancements** | OAuth2 (Google), Comments, Favorites, Ratings |
 
+---
+
 ## 🧑‍💻 Author
 
 **Ernesto Magaña**  
@@ -259,6 +272,8 @@ Software Engineer | Node.js & NestJS Developer
 ## 📄 License
 
 This project is licensed under the **MIT License**.
+
+---
 
 
 
