@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { mockResponseUser, mockMongoUser } from '../../../common/mocks/user';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 import { AppLogger } from 'src/common/interfaces';
+import { mockLogger } from 'src/common/mocks/logger';
 
 jest.mock('bcrypt');
 
@@ -23,14 +24,6 @@ describe('AuthService', () => {
 
     const mockJwtService = {
       signAsync: jest.fn(),
-    };
-
-    const mockLogger = {
-      log: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      verbose: jest.fn(),
-      debug: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -58,7 +51,7 @@ describe('AuthService', () => {
 
   describe('validateUser', () => {
     it('should return user when email exists and password matches', async () => {
-      const password = 'plainPassword';
+      const password = 'hashedPassword';
       const input = { email: mockResponseUser.email, password };
 
       userService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
@@ -67,25 +60,25 @@ describe('AuthService', () => {
       const result = await authService.validateUser(input);
 
       expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
-        input.email,
+        'robert@example.com',
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(
-        password,
-        mockMongoUser.password,
+        'hashedPassword',
+        'hashedPassword',
       );
       expect(logger.log).toHaveBeenCalledWith(
         {
           message: 'User successfully authenticated',
-          userId: mockMongoUser._id.toHexString(),
-          username: mockMongoUser.username,
+          userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+          username: 'robert123',
           isSuperUser: false,
         },
         AuthService.name,
         HttpStatus.OK,
       );
       expect(result).toEqual({
-        userId: mockMongoUser._id.toHexString(),
-        username: mockMongoUser.username,
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
         isSuperUser: false,
       });
     });
@@ -103,13 +96,13 @@ describe('AuthService', () => {
       );
 
       expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
-        input.email,
+        'notfound@test.com',
       );
       expect(bcrypt.compare).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(
         {
           message: 'Invalid credentials attempt',
-          email: input.email,
+          email: 'notfound@test.com',
         },
         AuthService.name,
         HttpStatus.UNAUTHORIZED,
@@ -118,7 +111,10 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException and log warning if password does not match', async () => {
-      const input = { email: mockMongoUser.email, password: 'wrong' };
+      const input = {
+        email: mockMongoUser.email,
+        password: 'incorrectPassword',
+      };
 
       userService.checkIfUserExistsByEmail.mockResolvedValue(mockMongoUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
@@ -131,16 +127,16 @@ describe('AuthService', () => {
       );
 
       expect(userService.checkIfUserExistsByEmail).toHaveBeenCalledWith(
-        input.email,
+        'robert@example.com',
       );
       expect(bcrypt.compare).toHaveBeenCalledWith(
-        input.password,
-        mockMongoUser.password,
+        'incorrectPassword',
+        'hashedPassword',
       );
       expect(logger.warn).toHaveBeenCalledWith(
         {
           message: 'Invalid credentials attempt',
-          email: input.email,
+          email: 'robert@example.com',
         },
         AuthService.name,
         HttpStatus.UNAUTHORIZED,
@@ -170,15 +166,15 @@ describe('AuthService', () => {
       expect(logger.log).toHaveBeenCalledWith(
         {
           message: 'Access token issued',
-          userId: user.userId,
+          userId: '60f7c0e2e2a2c2a4d8e2e2a2',
         },
         AuthService.name,
         HttpStatus.OK,
       );
       expect(result).toEqual({
-        accessToken: mockToken,
-        userId: user.userId,
-        username: user.username,
+        accessToken: 'mock.jwt.token',
+        userId: '60f7c0e2e2a2c2a4d8e2e2a2',
+        username: 'robert123',
       });
     });
   });

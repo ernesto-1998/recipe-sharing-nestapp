@@ -50,13 +50,15 @@ export const mockResponseRecipe: ResponseRecipeDto = {
   },
 };
 
+export const mockPaginationInfoRecipes = {
+  count: 1,
+  pages: 1,
+  next: null,
+  prev: null,
+};
+
 export const mockPaginatedRecipes = {
-  info: {
-    count: 1,
-    pages: 1,
-    next: null,
-    prev: null,
-  },
+  info: mockPaginationInfoRecipes,
   results: [mockResponseRecipe],
 };
 
