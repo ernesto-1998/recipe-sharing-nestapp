@@ -14,6 +14,7 @@ import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RequestContextMiddleware } from './common/context/request-context.middleware';
 import { RequestContextModule } from './common/context/request-context.module';
+import { CommentModule } from './modules/comment/comment.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { RequestContextModule } from './common/context/request-context.module';
     UserModule,
     AuthModule,
     RecipeModule,
+    CommentModule,
   ],
   controllers: [AppController],
   providers: [
