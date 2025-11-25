@@ -19,8 +19,8 @@ import {
   mockTokenUser,
   mockChangePassword,
 } from '../../../common/mocks/user';
-import { UserService } from '../user.service';
-import { UserRepository } from '../user.repository';
+import { UserService } from './user.service';
+import { UserRepository } from '../repositories/user.repository';
 import { UserDocument } from '../schemas/user.schema';
 import { Mapper } from 'src/common/utils/mapper';
 import { ResponseUserDto } from '../dto';

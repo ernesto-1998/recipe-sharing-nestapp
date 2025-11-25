@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpStatus, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { AuthService } from '../auth.service';
-import { UserService } from '../../user/user.service';
+import { AuthService } from './auth.service';
+import { UserService } from '../../user/services/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { mockResponseUser, mockMongoUser } from '../../../common/mocks/user';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';

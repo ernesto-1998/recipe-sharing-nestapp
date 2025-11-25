@@ -8,8 +8,8 @@ import {
   mockTokenUser,
   mockChangePassword,
 } from '../../../common/mocks/user';
-import { UserController } from '../user.controller';
-import { UserService } from '../user.service';
+import { UserController } from './user.controller';
+import { UserService } from '../services/user.service';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 import { RequestContextService } from 'src/common/context/request-context.service';
 

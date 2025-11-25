@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException } from '@nestjs/common';
-import { AuthController } from '../auth.controller';
-import { AuthService } from '../auth.service';
-import { UserService } from '../../user/user.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from '../services/auth.service';
+import { UserService } from '../../user/services/user.service';
 import {
   mockResponseUser,
   mockCreateUser,

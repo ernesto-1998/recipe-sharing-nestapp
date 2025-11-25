@@ -4,19 +4,21 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateRecipeDto } from './dto/create-recipe.dto';
-import { UpdateRecipeDto } from './dto/update-recipe.dto';
-import { RecipeRepository } from './recipe.repository';
+import { RecipeRepository } from '../repositories/recipe.repository';
+import { UserService } from 'src/modules/user/services/user.service';
 import type { AppLogger } from 'src/common/interfaces';
 import { CustomToken, PrivacyLevel } from 'src/common/enums';
-import { MyRecipesFilterQueryDto, ResponseRecipeDto } from './dto';
-import { Mapper } from 'src/common/utils/mapper';
-import { PaginationQueryDto } from 'src/common/dto';
-import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
+import {
+  CreateRecipeDto,
+  MyRecipesFilterQueryDto,
+  PaginatedRecipesResponseDto,
+  RecipeFilterQueryDto,
+  ResponseRecipeDto,
+  UpdateRecipeDto,
+} from '../dto';
+import { buildRecipeFilter, buildRecipeSort } from '../utils';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
-import { UserService } from '../user/user.service';
-import { RecipeFilterQueryDto } from './dto/recipe-filter-query.dto';
-import { buildRecipeFilter, buildRecipeSort } from './utils';
+import { Mapper } from 'src/common/utils/mapper';
 
 @Injectable()
 export class RecipeService {
@@ -41,7 +43,6 @@ export class RecipeService {
       this.recipeRepository.findAll({ filter, sort, skip, limit }),
       this.recipeRepository.count(filter),
     ]);
-
     return {
       info: buildPaginationInfo(total, page, limit, baseUrl),
       results: Mapper.toResponseMany(ResponseRecipeDto, recipes),

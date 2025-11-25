@@ -12,6 +12,48 @@ describe('buildPaginationInfo', () => {
     });
   });
 
+  it('should reset limit and page if they are already in the basePath (And there are more query params) for next and prev pages', () => {
+    const result = buildPaginationInfo(
+      50,
+      2,
+      10,
+      '/recipes?category=Desayuno&page=5&limit=20',
+    );
+
+    expect(result).toEqual({
+      count: 50,
+      pages: 5,
+      next: '/recipes?category=Desayuno&page=3&limit=10',
+      prev: '/recipes?category=Desayuno&page=1&limit=10',
+    });
+  });
+
+  it('should generate correct next and prev pages if page and limit are the only query params in the basePath', () => {
+    const result = buildPaginationInfo(50, 2, 10, '/recipes?page=5&limit=20');
+
+    expect(result).toEqual({
+      count: 50,
+      pages: 5,
+      next: '/recipes?page=3&limit=10',
+      prev: '/recipes?page=1&limit=10',
+    });
+  });
+
+  it('should correctly add page and limit if these two are not in the basePath (but it containts other query params)', () => {
+    const result = buildPaginationInfo(
+      30,
+      2,
+      10,
+      '/recipes?category=Mariscos&ingredients=chile habanero, harina de trigo',
+    );
+    expect(result).toEqual({
+      count: 30,
+      pages: 3,
+      next: '/recipes?category=Mariscos&ingredients=chile habanero, harina de trigo&page=3&limit=10',
+      prev: '/recipes?category=Mariscos&ingredients=chile habanero, harina de trigo&page=1&limit=10',
+    });
+  });
+
   it('should return next page null when on the last page', () => {
     const result = buildPaginationInfo(30, 3, 10, '/recipes');
 

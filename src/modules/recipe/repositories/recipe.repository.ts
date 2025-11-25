@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Recipe, RecipeDocument } from './schemas/recipe.schema';
+import { Recipe, RecipeDocument } from '../schemas/recipe.schema';
 import { Model } from 'mongoose';
-import { CreateRecipeDto, UpdateRecipeDto } from './dto';
+import { CreateRecipeDto, UpdateRecipeDto } from '../dto';
 import { flattenObject } from 'src/common/utils/flatten';
-import { RecipeFilterObject, RecipeSortObject } from './types';
+import { RecipeFilterObject, RecipeSortObject } from '../types';
 
 @Injectable()
 export class RecipeRepository {

@@ -11,13 +11,15 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { RecipeService } from './recipe.service';
+import { RecipeService } from '../services/recipe.service';
 import {
   CreateRecipeDto,
   MyRecipesFilterQueryDto,
   ResponseRecipeDto,
-} from './dto';
-import { UpdateRecipeDto } from './dto';
+  UpdateRecipeDto,
+  PaginatedRecipesResponseDto,
+  RecipeFilterQueryDto,
+} from '../dto';
 import { RequestContextService } from 'src/common/context/request-context.service';
 import { ApiOkResponsePaginated, Public } from 'src/common/decorators';
 import {
@@ -27,12 +29,10 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { PaginatedRecipesResponseDto } from './dto/paginated-recipes-response.dto';
 import { RecipeOwnerGuard } from 'src/common/guards/recipe-owner.guard';
 import { ParseMongoIdPipe } from 'src/common/pipes';
-import { RecipeFilterQueryDto } from './dto/recipe-filter-query.dto';
-import { CurrentUser } from '../auth/decorators';
-import type { ITokenUser } from '../auth/interfaces';
+import { CurrentUser } from '../../auth/decorators';
+import type { ITokenUser } from '../../auth/interfaces';
 
 @Controller({ version: '1', path: 'recipes' })
 export class RecipeController {

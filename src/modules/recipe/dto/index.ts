@@ -6,3 +6,4 @@ export * from './update-recipe.dto';
 export * from './response-recipe.dto';
 export * from './recipe-filter-query.dto';
 export * from './my-recipe-filter-query.dto';
+export * from './paginated-recipes-response.dto';

@@ -4,12 +4,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginDto, AuthResponseDto } from './dto';
-import { UserService } from '../user/user.service';
+import { LoginDto, AuthResponseDto } from '../dto';
+import { UserService } from '../../user/services/user.service';
 
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { ITokenPayload, ITokenUser } from './interfaces/';
+import { ITokenPayload, ITokenUser } from '../interfaces/';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
 import { UserRolesLevel } from 'src/common/enums';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserService } from 'src/modules/user/user.service';
+import { UserService } from 'src/modules/user/services/user.service';
 import { BaseOwnerGuard } from './base-owner.guard';
 
 @Injectable()

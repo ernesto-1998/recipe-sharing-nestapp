@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RecipeController } from '../recipe.controller';
-import { RecipeService } from '../recipe.service';
+import { RecipeController } from './recipe.controller';
+import { RecipeService } from '../services/recipe.service';
 import { RequestContextService } from 'src/common/context/request-context.service';
 import {
   mockCreateRecipe,

@@ -8,13 +8,13 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import { UserService } from './user.service';
+import { UserService } from '../services/user.service';
 import {
   UpdateUserDto,
   ResponseUserDto,
   PaginatedUsersResponseDto,
   ChangePasswordDto,
-} from './dto';
+} from '../dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import {
   ApiConflictResponse,
@@ -28,8 +28,8 @@ import { ErrorResponseDto, PaginationQueryDto } from 'src/common/dto';
 import { UserOwnerGuard } from 'src/common/guards/user-owner.guard';
 import { ApiOkResponsePaginated } from 'src/common/decorators/api-ok-response-paginated.decorator';
 import { RequestContextService } from 'src/common/context/request-context.service';
-import { CurrentUser } from '../auth/decorators';
-import type { ITokenUser } from '../auth/interfaces';
+import { CurrentUser } from '../../auth/decorators';
+import type { ITokenUser } from '../../auth/interfaces';
 import { ParseMongoIdPipe } from 'src/common/pipes';
 
 @ApiExtraModels(ErrorResponseDto)

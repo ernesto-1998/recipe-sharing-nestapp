@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { RecipeService } from '../recipe.service';
+import { RecipeService } from './recipe.service';
 import { Mapper } from 'src/common/utils/mapper';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
-import { RecipeRepository } from '../recipe.repository';
+import { RecipeRepository } from '../repositories/recipe.repository';
 import { AppLogger } from 'src/common/interfaces';
 import { CustomToken } from 'src/common/enums';
 import { mockLogger } from 'src/common/mocks/logger';
@@ -14,7 +14,7 @@ import {
   mockRecipe,
   mockResponseRecipe,
 } from 'src/common/mocks/recipe';
-import { UserService } from 'src/modules/user/user.service';
+import { UserService } from 'src/modules/user/services/user.service';
 import { ResponseRecipeDto } from '../dto';
 import { NotFoundException } from '@nestjs/common';
 

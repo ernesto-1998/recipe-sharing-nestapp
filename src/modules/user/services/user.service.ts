@@ -14,9 +14,9 @@ import {
   ResponseUserDto,
   PaginatedUsersResponseDto,
   ChangePasswordDto,
-} from './dto';
-import { UserDocument } from './schemas/user.schema';
-import { UserRepository } from './user.repository';
+} from '../dto';
+import { UserDocument } from '../schemas/user.schema';
+import { UserRepository } from '../repositories/user.repository';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { Mapper } from 'src/common/utils/mapper';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
