@@ -10,7 +10,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { RecipeSortKeys } from '../enum/recipe-sort-keys.enum';
+import { RecipeSortKeys } from '../enums/recipe-sort-keys.enum';
 import { SortOrder } from 'src/common/enums/sort-order.enum';
 import { ISortQuery } from 'src/common/interfaces';
 

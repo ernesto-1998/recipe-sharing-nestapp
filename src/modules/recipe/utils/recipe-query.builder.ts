@@ -1,6 +1,6 @@
 import { RecipeFilterQueryDto } from '../dto/recipe-filter-query.dto';
 import { PrivacyLevel, SortOrder } from 'src/common/enums';
-import { RecipeSortKeys } from '../enum';
+import { RecipeSortKeys } from '../enums';
 import { RecipeFilterObject, RecipeSortObject } from '../types';
 import { MyRecipesFilterQueryDto } from '../dto';
 
