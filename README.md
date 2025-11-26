@@ -67,7 +67,6 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 #### **Comments Module**
 - Manages the interaction between users and recipes through **comments and ratings**.
 - Allows users to **post, update, and delete comments** on public or authorized recipes.
-- Supports a **rating system** (1 to 5 stars) to evaluate recipe quality.
 - Each comment stores the **author reference**, **recipe reference**, and **timestamp**.
 - Designed to integrate seamlessly with the **Recipe Module** for displaying community feedback.
 - In future updates, moderation and report features will be implemented.
