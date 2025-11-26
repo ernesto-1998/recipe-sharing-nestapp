@@ -35,7 +35,7 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 - [✔️] **Recipe Module**
 - [✔️] **Logger Module**
 - [✔️] **Context Module**
-- [ ] **Comment Module**
+- [✔️] **Comment Module**
 - [ ] **Favorite Recipes**
 - [ ] **Search History**
 - [ ] **Reports & Moderation**
@@ -171,7 +171,6 @@ This setup allows **high performance** for document-heavy data (recipes, comment
   "recipeId": "ObjectId",
   "userId": "ObjectId",
   "text": "string",
-  "rating": "number",
   "createdAt": "Date",
   "updatedAt": "Date"
 }

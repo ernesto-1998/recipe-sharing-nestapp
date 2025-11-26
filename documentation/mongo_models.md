@@ -73,7 +73,6 @@
   "recipeId": "ObjectId",
   "userId": "ObjectId",
   "text": "string",
-  "rating": "number",
   "createdAt": "Date",
   "updatedAt": "Date"
 }
