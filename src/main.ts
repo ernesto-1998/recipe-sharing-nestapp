@@ -1,12 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { VersioningType, ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
   });
+
+  app.use(helmet());
 
   app.setGlobalPrefix('api');
   app.enableVersioning({
