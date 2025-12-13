@@ -3,13 +3,13 @@
 A **NestJS-based RESTful API** for a **Recipe Sharing Platform**, where users can create, explore, and share cooking recipes.  
 The project is designed with a **modular architecture**, **robust authentication**, **structured logging**, and **scalability** in mind.
 
-This API is currently under active development, with future plans including **OAuth2 authentication with Google**, **commenting system**, and **user social interactions**.
+This API is currently under active development, with future plans including **user social interactions**.
 
 ---
 
 ## 🚀 Features
 
-- User registration and authentication (JWT)
+- User registration and authentication (JWT and OAuth protocol with Google Provider)
 - Role-based access control and privacy settings
 - Recipe management (CRUD)
 - Pagination, filtering, and case-insensitive search
@@ -36,10 +36,10 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 - [✔️] **Logger Module**
 - [✔️] **Context Module**
 - [✔️] **Comment Module**
+- [✔️] **OAuth2 with Google Provider**
 - [ ] **Favorite Recipes**
 - [ ] **Search History**
 - [ ] **Reports & Moderation**
-- [ ] **OAuth2 with Google**
 - [ ] **User follower functionality**
 
 ---
@@ -50,7 +50,11 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 - Handles authentication using **email/password** via Passport local strategy.
 - Issues **JWT tokens** for secure session management.
 - Includes login and registration endpoints.
-- Designed to integrate future **Google OAuth2** authentication.
+
+#### **OAuth Module**
+- Handles authentication using different providers, at the moment just google provider.
+- Issues **JWT tokens** after performing the complete flow using the google endpoints.
+- Stores different oauth users info related to the loca user, this allows a user to have multiple providers.
 
 #### **User Module**
 - Manages user profiles, roles, and privacy settings.
@@ -132,6 +136,19 @@ This setup allows **high performance** for document-heavy data (recipes, comment
 }
 ```
 
+### 👤 OAuthAccount
+```json
+{
+  "_id": "ObjectId",
+  "userId": "ObjectId",
+  "provider": "google | github | microsoft",
+  "providerId": "string",
+  "email": "string",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
 ### 👤 Recipes
 ```json
 {
@@ -207,6 +224,15 @@ JWT_SECRET=EXC'89&&55jkl'
 # Rate Limiting
 RATE_LIMIT_TTL=60000
 RATE_LIMIT_LIMIT=100
+
+# Config variables for OAuth Google Provider
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=
+GOOGLE_AUTH_URL=
+GOOGLE_TOKEN_URL=
+GOOGLE_USER_INFO_URL=
+GOOGLE_SCOPE=
 ```
 
 ---
@@ -249,13 +275,13 @@ http://localhost:{APP_PORT}/api
 | **Language** | TypeScript |
 | **Framework** | NestJS |
 | **Databases** | MongoDB, PostgreSQL |
-| **Authentication** | JWT, Local Strategy |
+| **Authentication** | JWT, Local Strategy, OAuth Google Provider |
 | **Containerization** | Docker, Docker Compose |
 | **ORM/ODM** | Mongoose |
 | **Documentation** | Swagger |
 | **Logging** | Custom Logger Module + PostgreSQL |
 | **Platform** | Node.js |
-| **Future Enhancements** | OAuth2 (Google), Comments, Favorites, Ratings |
+| **Future Enhancements** | Favorites, Ratings |
 
 ---
 
