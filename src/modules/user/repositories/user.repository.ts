@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
 import { CreateUserDto, UpdateUserDto } from '../dto';
 import { flattenObject } from 'src/common/utils/flatten';
+import { CreateUserOAuthDto } from 'src/modules/auth/oauth/dto';
 
 @Injectable()
 export class UserRepository {
@@ -38,7 +39,20 @@ export class UserRepository {
   }
 
   create(createUserDto: CreateUserDto): Promise<UserDocument> {
-    const createdUser = new this.userModel(createUserDto);
+    const createdUser = new this.userModel({
+      ...createUserDto,
+      isOAuthUser: false,
+    });
+    return createdUser.save();
+  }
+
+  createFromOAuth(
+    createUserOAuthDto: CreateUserOAuthDto,
+  ): Promise<UserDocument> {
+    const createdUser = new this.userModel({
+      ...createUserOAuthDto,
+      isOAuthUser: true,
+    });
     return createdUser.save();
   }
 
@@ -50,6 +64,19 @@ export class UserRepository {
       .findByIdAndUpdate(
         userId,
         { $set: flattenObject(updateUserDto as Record<string, unknown>) },
+        { new: true, runValidators: true },
+      )
+      .exec();
+  }
+
+  updateIsOAuthUser(
+    userId: string,
+    isOAuthUser: boolean,
+  ): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $set: { isOAuthUser } },
         { new: true, runValidators: true },
       )
       .exec();

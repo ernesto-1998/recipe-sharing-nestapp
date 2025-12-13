@@ -77,6 +77,13 @@ export class UserDto {
   profile?: ProfileDto;
 
   @ApiProperty({
+    example: false,
+    description: 'Indicates if the user registered via OAuth',
+  })
+  @IsOptional()
+  isOAuthUser?: boolean = false;
+
+  @ApiProperty({
     enum: PrivacyLevel,
     example: PrivacyLevel.PUBLIC,
     description: 'User profile visibility: public or private',

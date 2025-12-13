@@ -24,7 +24,7 @@ export class AuthService {
 
   async validateUser(input: LoginDto): Promise<ITokenUser> {
     const user = await this.userService.checkIfUserExistsByEmail(input.email);
-    if (user) {
+    if (user && user?.password) {
       const match = await bcrypt.compare(input.password, user.password);
       if (match) {
         const userRes = user.toObject();
