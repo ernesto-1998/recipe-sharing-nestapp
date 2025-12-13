@@ -15,11 +15,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RequestContextMiddleware } from './common/context/request-context.middleware';
 import { RequestContextModule } from './common/context/request-context.module';
 import { CommentModule } from './modules/comment/comment.module';
+import { OAuthModule } from './modules/auth/oauth/oauth.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env.dev',
+      envFilePath: '.env',
       isGlobal: true,
     }),
     ThrottlerModule.forRootAsync({
@@ -42,6 +43,7 @@ import { CommentModule } from './modules/comment/comment.module';
     RequestContextModule,
     UserModule,
     AuthModule,
+    OAuthModule,
     RecipeModule,
     CommentModule,
   ],

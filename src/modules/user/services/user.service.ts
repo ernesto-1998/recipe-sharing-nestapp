@@ -15,13 +15,16 @@ import {
   PaginatedUsersResponseDto,
   ChangePasswordDto,
 } from '../dto';
-import { UserDocument } from '../schemas/user.schema';
+import { User, UserDocument } from '../schemas/user.schema';
 import { UserRepository } from '../repositories/user.repository';
 import type { AppLogger } from 'src/common/interfaces/app-logger.interface';
 import { Mapper } from 'src/common/utils/mapper';
 import { buildPaginationInfo } from 'src/common/utils/pagination';
 import { PaginationQueryDto } from 'src/common/dto';
 import { CustomToken } from 'src/common/enums/custom-tokens-providers.enum';
+import { PrivacyLevel, UserRolesLevel } from 'src/common/enums';
+import { CreateUserOAuthDto } from 'src/modules/auth/oauth/dto';
+import { OAuthUser } from 'src/modules/auth/oauth/types';
 
 @Injectable()
 export class UserService {
@@ -100,6 +103,34 @@ export class UserService {
     return Mapper.toResponse(ResponseUserDto, user);
   }
 
+  async createFromOAuthUser(oauthUser: OAuthUser): Promise<ResponseUserDto> {
+    const username = await this.generateUniqueUsername({
+      firstName: oauthUser.firstName,
+      lastName: oauthUser.lastName,
+      email: oauthUser.email,
+    });
+    const user = await this.userRepository.createFromOAuth({
+      email: oauthUser.email,
+      username: username,
+      role: UserRolesLevel.USER,
+      privacy: PrivacyLevel.PUBLIC,
+      profile: {
+        firstname: oauthUser?.firstName,
+        lastname: oauthUser?.lastName,
+        avatar: oauthUser?.picture,
+      },
+    } as CreateUserOAuthDto);
+    this.logger.log(
+      {
+        message: 'OAuth user created.',
+        userId: user._id,
+      },
+      UserService.name,
+      HttpStatus.CREATED,
+    );
+    return Mapper.toResponse(ResponseUserDto, user);
+  }
+
   async update(
     userId: string,
     updateUserDto: UpdateUserDto,
@@ -128,13 +159,35 @@ export class UserService {
     return Mapper.toResponse(ResponseUserDto, user);
   }
 
+  async updateIsOAuthUser(userId: string, isOAuthUser: boolean): Promise<void> {
+    const user = await this.userRepository.updateIsOAuthUser(
+      userId,
+      isOAuthUser,
+    );
+    if (user === null)
+      throw new NotFoundException('User with this ID does not exists.');
+
+    this.logger.log(
+      {
+        message: 'User OAuth status updated.',
+        userId,
+        isOAuthUser,
+      },
+      UserService.name,
+      HttpStatus.OK,
+    );
+  }
+
   async changePassword(
     userId: string,
     changePasswordDto: ChangePasswordDto,
   ): Promise<void> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('User not found.');
-
+    if (!user.password)
+      throw new BadRequestException(
+        'Password change not allowed for OAuth users.',
+      );
     const isMatch = await bcrypt.compare(
       changePasswordDto.currentPassword,
       user.password,
@@ -176,5 +229,40 @@ export class UserService {
     username: string,
   ): Promise<UserDocument | null> {
     return this.userRepository.findByUsername(username);
+  }
+
+  async generateUniqueUsername(data: {
+    firstName?: string;
+    lastName?: string;
+    email: string;
+  }): Promise<string> {
+    let baseUsername: string;
+
+    if (data.firstName && data.lastName) {
+      baseUsername = `${data.firstName}${data.lastName}`
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+    } else {
+      baseUsername = data.email
+        .split('@')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    if (!baseUsername || baseUsername.length < 3) {
+      baseUsername = 'user';
+    }
+
+    let username = baseUsername;
+    let counter = 1;
+
+    while (await this.userRepository.findByUsername(username)) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+
+    return username;
   }
 }
