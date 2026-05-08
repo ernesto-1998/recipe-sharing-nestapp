@@ -1,13 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { Client } from 'pg';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Pool } from 'pg';
 import { LogLevel } from '../enums/log-level.enum';
 import { AppLogger } from '../interfaces/app-logger.interface';
 import { RequestContextService } from '../context/request-context.service';
 import { IRequestContext } from '../context/interfaces/request-context.interface';
 
 @Injectable()
-export class PostgresLogger implements AppLogger, OnModuleInit {
-  private readonly client: Client;
+export class PostgresLogger implements AppLogger, OnModuleInit, OnModuleDestroy {
+  private readonly pool: Pool;
   private isConnected = false;
 
   constructor(private readonly requestCtx: RequestContextService) {
@@ -19,12 +19,19 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
       POSTGRES_DB,
     } = process.env;
 
-    this.client = new Client({
+    this.pool = new Pool({
       host: POSTGRES_HOST ?? 'localhost',
       port: parseInt(POSTGRES_PORT ?? '5432', 10),
       user: POSTGRES_USER ?? 'neto',
       password: POSTGRES_PASSWORD ?? 'neto',
       database: POSTGRES_DB ?? 'recipe_logs_db',
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    });
+
+    this.pool.on('error', (err) => {
+      console.error('Unexpected error on idle PostgreSQL client:', err);
     });
   }
 
@@ -34,7 +41,7 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        await this.client.connect();
+        await this.pool.query('SELECT 1');
         this.isConnected = true;
         console.log('Successfully connected to Postgres.');
         return;
@@ -54,6 +61,15 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
     console.error(
       `Failed to connect to Postgres after ${maxRetries} attempts.`,
     );
+  }
+
+  async onModuleDestroy() {
+    try {
+      await this.pool.end();
+      console.log('PostgreSQL pool has been closed.');
+    } catch (err) {
+      console.error('Error while closing PostgreSQL pool:', err);
+    }
   }
 
   log(message: unknown, context?: string, statusCode?: number) {
@@ -81,7 +97,7 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
     this.insertLog(LogLevel.VERBOSE, message, context, statusCode);
   }
 
-  private async insertLog(
+  private insertLog(
     level: LogLevel,
     message: unknown,
     context?: string,
@@ -89,7 +105,7 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
     trace?: string,
   ) {
     if (!this.isConnected) {
-      console.error('Cannot insert log: PostgreSQL client is not connected.');
+      console.error('Cannot insert log: PostgreSQL pool is not connected.');
       return;
     }
 
@@ -124,10 +140,8 @@ export class PostgresLogger implements AppLogger, OnModuleInit {
       trace || null,
     ];
 
-    try {
-      await this.client.query(query, params);
-    } catch (err) {
+    this.pool.query(query, params).catch((err) => {
       console.error('Failed to insert log into PostgreSQL:', err);
-    }
+    });
   }
 }

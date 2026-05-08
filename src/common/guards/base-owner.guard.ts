@@ -14,7 +14,7 @@ import type { AppLogger } from '../interfaces/app-logger.interface';
 import { CustomToken } from '../enums/custom-tokens-providers.enum';
 
 export abstract class BaseOwnerGuard implements CanActivate {
-  @Inject(CustomToken.APP_LOGGER) protected readonly logger: AppLogger;
+  @Inject(CustomToken.APP_LOGGER) protected readonly logger!: AppLogger;
 
   constructor(
     protected readonly service: IGenericService,
@@ -54,7 +54,7 @@ export abstract class BaseOwnerGuard implements CanActivate {
       throw new NotFoundException('Resource not found.');
     }
 
-    let resourceOwnerId: unknown = resource[this.ownerField];
+    let resourceOwnerId: unknown = resource[this.ownerField as keyof {}];
 
     if (resourceOwnerId instanceof Types.ObjectId) {
       resourceOwnerId = resourceOwnerId.toHexString();
