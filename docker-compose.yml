@@ -19,7 +19,7 @@ services:
     environment:
       POSTGRES_USER: neto
       POSTGRES_PASSWORD: neto
-      POSTGRES_DB: recipe_logs_db 
+      POSTGRES_DB: recipe_logs_db
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     ports:
       - 5432:5432
@@ -27,6 +27,25 @@ services:
       - pg_log_data:/var/lib/postgresql/data
       - ./database/postgres/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  rabbitmq_recipe:
+    image: rabbitmq:3-management
+    container_name: rabbitmq_recipe
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: neto
+      RABBITMQ_DEFAULT_PASS: neto
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   mongo_data:
   pg_log_data:
+  rabbitmq_data:
