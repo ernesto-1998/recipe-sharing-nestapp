@@ -1,20 +1,23 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   connect,
   type AmqpConnectionManager,
   type ChannelWrapper,
 } from 'amqp-connection-manager';
-import type { Options } from 'amqplib';
+import type { ConsumeMessage, Options } from 'amqplib';
 import { RabbitMQExchangeType } from '../enums';
-import {
-  RABBITMQ_RECONNECT_ATTEMPTS,
-  RABBITMQ_RECONNECT_INTERVAL_MS,
-} from '../constants';
 import type { RabbitMQConnectionOptions } from '../interfaces';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(RabbitMQService.name);
+
   private connection: AmqpConnectionManager | null = null;
   private channelWrapper: ChannelWrapper | null = null;
   private isConnected = false;
@@ -49,19 +52,17 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
     this.connection.on('connect', () => {
       this.isConnected = true;
-      console.log('RabbitMQ connection established');
+      this.logger.log('RabbitMQ connection established');
     });
 
     this.connection.on('disconnect', (params) => {
       this.isConnected = false;
-      console.error('RabbitMQ connection lost', params.err);
+      this.logger.error('RabbitMQ connection lost', params.err);
     });
 
-    this.channelWrapper = this.connection.createChannel({
-      json: true,
-    });
+    this.channelWrapper = this.connection.createChannel({ json: true });
 
-    await this.waitForInitialConnection();
+    await this.channelWrapper.waitForConnect();
   }
 
   private buildConnectionUrl(options: RabbitMQConnectionOptions): string {
@@ -72,29 +73,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     return `${protocol}://${user}:${encodedPassword}@${host}:${port}${encodedVhost}`;
   }
 
-  private async waitForInitialConnection(): Promise<void> {
+  private getChannel(): ChannelWrapper {
     if (!this.channelWrapper) {
-      throw new Error('Channel wrapper not initialized');
+      throw new Error('RabbitMQ channel is not initialized');
     }
-
-    for (let attempt = 1; attempt <= RABBITMQ_RECONNECT_ATTEMPTS; attempt++) {
-      try {
-        await this.channelWrapper.waitForConnect();
-        return;
-      } catch (error) {
-        if (attempt === RABBITMQ_RECONNECT_ATTEMPTS) {
-          throw new Error(
-            `Failed to connect to RabbitMQ after ${RABBITMQ_RECONNECT_ATTEMPTS} attempts`,
-          );
-        }
-        console.warn(
-          `RabbitMQ connection attempt ${attempt} failed, retrying in ${RABBITMQ_RECONNECT_INTERVAL_MS}ms`,
-        );
-        await new Promise((resolve) =>
-          setTimeout(resolve, RABBITMQ_RECONNECT_INTERVAL_MS),
-        );
-      }
-    }
+    return this.channelWrapper;
   }
 
   async assertExchange(
@@ -102,9 +85,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     type: RabbitMQExchangeType,
     options?: Options.AssertExchange,
   ): Promise<void> {
-    this.ensureConnected();
-
-    await this.channelWrapper!.assertExchange(exchange, type, {
+    await this.getChannel().assertExchange(exchange, type, {
       durable: true,
       ...options,
     });
@@ -114,9 +95,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     queue: string,
     options?: Options.AssertQueue,
   ): Promise<void> {
-    this.ensureConnected();
-
-    await this.channelWrapper!.assertQueue(queue, {
+    await this.getChannel().assertQueue(queue, {
       durable: true,
       ...options,
     });
@@ -128,9 +107,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     routingKey: string,
     args?: Record<string, unknown>,
   ): Promise<void> {
-    this.ensureConnected();
-
-    await this.channelWrapper!.bindQueue(queue, exchange, routingKey, args);
+    await this.getChannel().bindQueue(queue, exchange, routingKey, args);
   }
 
   async publish(
@@ -139,18 +116,38 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     message: Record<string, unknown>,
     options?: Options.Publish,
   ): Promise<void> {
-    this.ensureConnected();
-
-    await this.channelWrapper!.publish(exchange, routingKey, message, {
+    await this.getChannel().publish(exchange, routingKey, message, {
       persistent: true,
       ...options,
     });
   }
 
-  private ensureConnected(): void {
-    if (!this.channelWrapper) {
-      throw new Error('RabbitMQ channel is not initialized');
-    }
+  async subscribe(
+    queue: string,
+    handler: (message: Record<string, unknown>) => Promise<void>,
+    options?: Options.Consume,
+  ): Promise<void> {
+    await this.getChannel().consume(
+      queue,
+      (msg: ConsumeMessage | null) => {
+        if (!msg) return;
+
+        const process = async (): Promise<void> => {
+          const content = JSON.parse(msg.content.toString()) as Record<
+            string,
+            unknown
+          >;
+          await handler(content);
+          this.getChannel().ack(msg);
+        };
+
+        process().catch((err: unknown) => {
+          this.logger.error('Failed to process message', err);
+          this.getChannel().nack(msg, false, false);
+        });
+      },
+      options,
+    );
   }
 
   private async shutdown(): Promise<void> {
@@ -161,9 +158,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       if (this.connection) {
         await this.connection.close();
       }
-      console.log('RabbitMQ connection closed gracefully');
-    } catch (error) {
-      console.error('Error during RabbitMQ graceful shutdown', error);
+      this.logger.log('RabbitMQ connection closed gracefully');
+    } catch (err) {
+      this.logger.error('Error during RabbitMQ graceful shutdown', err);
     }
   }
 }
