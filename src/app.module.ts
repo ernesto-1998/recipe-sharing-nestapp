@@ -16,6 +16,7 @@ import { RequestContextMiddleware } from './common/context/request-context.middl
 import { RequestContextModule } from './common/context/request-context.module';
 import { CommentModule } from './modules/comment/comment.module';
 import { OAuthModule } from './modules/auth/oauth/oauth.module';
+import { RabbitMQModule } from './common/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { OAuthModule } from './modules/auth/oauth/oauth.module';
     OAuthModule,
     RecipeModule,
     CommentModule,
+    RabbitMQModule,
   ],
   controllers: [AppController],
   providers: [
