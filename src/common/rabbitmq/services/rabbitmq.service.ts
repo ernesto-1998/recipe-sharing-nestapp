@@ -1,8 +1,8 @@
 import {
   Injectable,
   Logger,
-  OnModuleInit,
   OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -10,7 +10,8 @@ import {
   type AmqpConnectionManager,
   type ChannelWrapper,
 } from 'amqp-connection-manager';
-import type { ConsumeMessage, Options } from 'amqplib';
+import type { ConfirmChannel, ConsumeMessage, Options } from 'amqplib';
+
 import { RabbitMQExchangeType } from '../enums';
 import type { RabbitMQConnectionOptions } from '../interfaces';
 
@@ -20,57 +21,56 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   private connection: AmqpConnectionManager | null = null;
   private channelWrapper: ChannelWrapper | null = null;
-  private isConnected = false;
 
   constructor(private readonly configService: ConfigService) {}
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
     const options: RabbitMQConnectionOptions = {
-      host: this.configService.get('RABBITMQ_HOST', 'localhost'),
-      port: Number(this.configService.get('RABBITMQ_PORT', '5672')),
-      user: this.configService.get('RABBITMQ_USER', 'guest'),
-      password: this.configService.get('RABBITMQ_PASSWORD', 'guest'),
-      protocol: this.configService.get('RABBITMQ_PROTOCOL', 'amqp'),
-      vhost: this.configService.get('RABBITMQ_VHOST', '/'),
+      host: this.configService.get<string>('RABBITMQ_HOST', 'localhost'),
+      port: Number(this.configService.get<string>('RABBITMQ_PORT', '5672')),
+      user: this.configService.get<string>('RABBITMQ_USER', 'guest'),
+      password: this.configService.get<string>('RABBITMQ_PASSWORD', 'guest'),
+      protocol: this.configService.get<string>('RABBITMQ_PROTOCOL', 'amqp'),
+      vhost: this.configService.get<string>('RABBITMQ_VHOST', '/'),
     };
 
-    await this.initialize(options);
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.shutdown();
-  }
-
-  get connected(): boolean {
-    return this.isConnected;
-  }
-
-  private async initialize(options: RabbitMQConnectionOptions): Promise<void> {
     const url = this.buildConnectionUrl(options);
 
     this.connection = connect([url]);
 
     this.connection.on('connect', () => {
-      this.isConnected = true;
       this.logger.log('RabbitMQ connection established');
     });
 
     this.connection.on('disconnect', (params) => {
-      this.isConnected = false;
       this.logger.error('RabbitMQ connection lost', params.err);
     });
 
-    this.channelWrapper = this.connection.createChannel({ json: true });
+    this.connection.on('connectFailed', (params) => {
+      this.logger.error('RabbitMQ connection failed', params.err);
+    });
 
-    await this.channelWrapper.waitForConnect();
+    this.channelWrapper = this.connection.createChannel({
+      json: true,
+    });
   }
 
-  private buildConnectionUrl(options: RabbitMQConnectionOptions): string {
-    const { protocol, user, password, host, port, vhost } = options;
-    const encodedPassword = encodeURIComponent(password);
-    const encodedVhost =
-      vhost === '/' ? '' : `/${encodeURIComponent(vhost.replace(/^\//, ''))}`;
-    return `${protocol}://${user}:${encodedPassword}@${host}:${port}${encodedVhost}`;
+  async onModuleDestroy(): Promise<void> {
+    try {
+      if (this.channelWrapper) {
+        await this.channelWrapper.close();
+      }
+      if (this.connection) {
+        await this.connection.close();
+      }
+      this.logger.log('RabbitMQ connection closed gracefully');
+    } catch (err) {
+      this.logger.error('Error during RabbitMQ graceful shutdown', err);
+    }
+  }
+
+  get connected(): boolean {
+    return this.connection?.isConnected() ?? false;
   }
 
   private getChannel(): ChannelWrapper {
@@ -85,9 +85,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     type: RabbitMQExchangeType,
     options?: Options.AssertExchange,
   ): Promise<void> {
-    await this.getChannel().assertExchange(exchange, type, {
-      durable: true,
-      ...options,
+    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
+      await channel.assertExchange(exchange, type, {
+        durable: true,
+        ...options,
+      });
     });
   }
 
@@ -95,9 +97,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     queue: string,
     options?: Options.AssertQueue,
   ): Promise<void> {
-    await this.getChannel().assertQueue(queue, {
-      durable: true,
-      ...options,
+    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
+      await channel.assertQueue(queue, {
+        durable: true,
+        ...options,
+      });
     });
   }
 
@@ -107,7 +111,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     routingKey: string,
     args?: Record<string, unknown>,
   ): Promise<void> {
-    await this.getChannel().bindQueue(queue, exchange, routingKey, args);
+    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
+      await channel.bindQueue(queue, exchange, routingKey, args);
+    });
   }
 
   async publish(
@@ -127,40 +133,39 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     handler: (message: Record<string, unknown>) => Promise<void>,
     options?: Options.Consume,
   ): Promise<void> {
-    await this.getChannel().consume(
-      queue,
-      (msg: ConsumeMessage | null) => {
-        if (!msg) return;
+    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
+      await channel.consume(
+        queue,
+        (msg: ConsumeMessage | null) => {
+          if (!msg) return;
 
-        const process = async (): Promise<void> => {
-          const content = JSON.parse(msg.content.toString()) as Record<
-            string,
-            unknown
-          >;
-          await handler(content);
-          this.getChannel().ack(msg);
-        };
+          const process = async (): Promise<void> => {
+            const content = JSON.parse(msg.content.toString()) as Record<
+              string,
+              unknown
+            >;
+            await handler(content);
+            channel.ack(msg);
+          };
 
-        process().catch((err: unknown) => {
-          this.logger.error('Failed to process message', err);
-          this.getChannel().nack(msg, false, false);
-        });
-      },
-      options,
-    );
+          process().catch((err: unknown) => {
+            this.logger.error('Failed to process message', err);
+            channel.nack(msg, false, false);
+          });
+        },
+        options,
+      );
+    });
   }
 
-  private async shutdown(): Promise<void> {
-    try {
-      if (this.channelWrapper) {
-        await this.channelWrapper.close();
-      }
-      if (this.connection) {
-        await this.connection.close();
-      }
-      this.logger.log('RabbitMQ connection closed gracefully');
-    } catch (err) {
-      this.logger.error('Error during RabbitMQ graceful shutdown', err);
-    }
+  private buildConnectionUrl(options: RabbitMQConnectionOptions): string {
+    const { protocol, user, password, host, port, vhost } = options;
+
+    const encodedPassword = encodeURIComponent(password);
+
+    const encodedVhost =
+      vhost === '/' ? '' : `/${encodeURIComponent(vhost.replace(/^\//, ''))}`;
+
+    return `${protocol}://${user}:${encodedPassword}@${host}:${port}${encodedVhost}`;
   }
 }
