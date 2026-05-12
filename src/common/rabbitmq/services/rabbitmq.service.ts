@@ -1,8 +1,8 @@
 import {
   Injectable,
   Logger,
-  OnModuleDestroy,
   OnModuleInit,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -10,10 +10,12 @@ import {
   type AmqpConnectionManager,
   type ChannelWrapper,
 } from 'amqp-connection-manager';
-import type { ConfirmChannel, ConsumeMessage, Options } from 'amqplib';
-
-import { RabbitMQExchangeType } from '../enums';
+import type { ConfirmChannel, Options } from 'amqplib';
 import type { RabbitMQConnectionOptions } from '../interfaces';
+import {
+  RABBITMQ_RECONNECT_ATTEMPTS,
+  RABBITMQ_RECONNECT_INTERVAL_MS,
+} from '../constants/rabbitmq.constant';
 
 @Injectable()
 export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
@@ -22,7 +24,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: AmqpConnectionManager | null = null;
   private channelWrapper: ChannelWrapper | null = null;
 
-  constructor(private readonly configService: ConfigService) {}
+  private readonly channelReady: Promise<void>;
+  private resolveChannelReady!: () => void;
+
+  constructor(private readonly configService: ConfigService) {
+    this.channelReady = new Promise((resolve) => {
+      this.resolveChannelReady = resolve;
+    });
+  }
 
   onModuleInit(): void {
     const options: RabbitMQConnectionOptions = {
@@ -36,10 +45,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
     const url = this.buildConnectionUrl(options);
 
-    this.connection = connect([url]);
+    this.connection = connect([url], {
+      reconnectTimeInSeconds: RABBITMQ_RECONNECT_INTERVAL_MS / 1000,
+      heartbeatIntervalInSeconds: RABBITMQ_RECONNECT_ATTEMPTS,
+    });
 
     this.connection.on('connect', () => {
       this.logger.log('RabbitMQ connection established');
+      this.resolveChannelReady();
     });
 
     this.connection.on('disconnect', (params) => {
@@ -50,9 +63,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.logger.error('RabbitMQ connection failed', params.err);
     });
 
-    this.channelWrapper = this.connection.createChannel({
-      json: true,
-    });
+    this.channelWrapper = this.connection.createChannel({ json: true });
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -73,99 +84,63 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     return this.connection?.isConnected() ?? false;
   }
 
-  private getChannel(): ChannelWrapper {
-    if (!this.channelWrapper) {
-      throw new Error('RabbitMQ channel is not initialized');
-    }
-    return this.channelWrapper;
-  }
-
-  async assertExchange(
-    exchange: string,
-    type: RabbitMQExchangeType,
-    options?: Options.AssertExchange,
-  ): Promise<void> {
-    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
-      await channel.assertExchange(exchange, type, {
-        durable: true,
-        ...options,
-      });
-    });
-  }
-
-  async assertQueue(
-    queue: string,
-    options?: Options.AssertQueue,
-  ): Promise<void> {
-    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
-      await channel.assertQueue(queue, {
-        durable: true,
-        ...options,
-      });
-    });
-  }
-
-  async bindQueue(
-    queue: string,
-    exchange: string,
-    routingKey: string,
-    args?: Record<string, unknown>,
-  ): Promise<void> {
-    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
-      await channel.bindQueue(queue, exchange, routingKey, args);
-    });
-  }
-
   async publish(
     exchange: string,
     routingKey: string,
     message: Record<string, unknown>,
     options?: Options.Publish,
   ): Promise<void> {
-    await this.getChannel().publish(exchange, routingKey, message, {
-      persistent: true,
-      ...options,
-    });
+    await this.channelReady;
+
+    if (!this.channelWrapper) {
+      throw new Error('RabbitMQ channel is not available');
+    }
+
+    const published = await this.channelWrapper.publish(
+      exchange,
+      routingKey,
+      message,
+      { persistent: true, ...options },
+    );
+
+    if (!published) {
+      throw new Error('Message was not confirmed by RabbitMQ broker');
+    }
   }
 
-  async subscribe(
-    queue: string,
-    handler: (message: Record<string, unknown>) => Promise<void>,
-    options?: Options.Consume,
+  async createConsumerChannel(
+    setup: (channel: ConfirmChannel) => Promise<void>,
   ): Promise<void> {
-    await this.getChannel().addSetup(async (channel: ConfirmChannel) => {
-      await channel.consume(
-        queue,
-        (msg: ConsumeMessage | null) => {
-          if (!msg) return;
+    await this.channelReady;
 
-          const process = async (): Promise<void> => {
-            const content = JSON.parse(msg.content.toString()) as Record<
-              string,
-              unknown
-            >;
-            await handler(content);
-            channel.ack(msg);
-          };
+    if (!this.connection) {
+      throw new Error('RabbitMQ connection is not initialized');
+    }
 
-          process().catch((err: unknown) => {
-            this.logger.error('Failed to process message', err);
-            channel.nack(msg, false, false);
-          });
+    await new Promise<void>((resolve, reject) => {
+      const consumerChannel = this.connection!.createChannel({
+        json: true,
+        setup: async (channel: ConfirmChannel) => {
+          try {
+            await setup(channel);
+            resolve();
+          } catch (err) {
+            reject(err instanceof Error ? err : new Error(String(err)));
+          }
         },
-        options,
-      );
+      });
+
+      consumerChannel.on('error', (err) => {
+        this.logger.error('Consumer channel error', err);
+      });
     });
   }
 
   private buildConnectionUrl(options: RabbitMQConnectionOptions): string {
     const { protocol, user, password, host, port, vhost } = options;
-
     const encodedPassword = encodeURIComponent(password);
-
     const encodedVhost =
       vhost === '/' ? '' : `/${encodeURIComponent(vhost.replace(/^\//, ''))}`;
-
     return `${protocol}://${user}:${encodedPassword}@${host}:${port}${encodedVhost}`;
   }
 }

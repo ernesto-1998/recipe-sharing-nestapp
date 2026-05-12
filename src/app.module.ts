@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { LoggerModule } from './common/logger/logger.module';
+import { LogConsumerModule } from './common/logger/log-consumer.module';
 import { RecipeModule } from './modules/recipe/recipe.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { RequestContextMiddleware } from './common/context/request-context.middleware';
@@ -40,14 +41,15 @@ import { RabbitMQModule } from './common/rabbitmq/rabbitmq.module';
         dbName: configService.get('MONGO_DATABASE'),
       }),
     }),
+    RabbitMQModule,
     LoggerModule,
+    LogConsumerModule,
     RequestContextModule,
     UserModule,
     AuthModule,
     OAuthModule,
     RecipeModule,
     CommentModule,
-    RabbitMQModule,
   ],
   controllers: [AppController],
   providers: [

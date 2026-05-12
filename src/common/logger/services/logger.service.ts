@@ -4,13 +4,22 @@ import { AppLogger } from '../../interfaces/app-logger.interface';
 import { RequestContextService } from '../../context/request-context.service';
 import { IRequestContext } from '../../context/interfaces/request-context.interface';
 import { RabbitMQService } from 'src/common/rabbitmq/services/rabbitmq.service';
+import { LOG_EXCHANGE, LOG_ROUTING_KEY } from '../constants/logger.constants';
 
 @Injectable()
 export class LoggerService implements AppLogger {
+  private readonly exchange: string;
+  private readonly routingKey: string;
+
+  private static readonly PUBLISH_TIMEOUT_MS = 5000;
+
   constructor(
     private readonly rabbitmqService: RabbitMQService,
     private readonly requestCtx: RequestContextService,
-  ) {}
+  ) {
+    this.exchange = LOG_EXCHANGE;
+    this.routingKey = LOG_ROUTING_KEY;
+  }
 
   log(message: unknown, context?: string, statusCode?: number) {
     this.publish(LogLevel.LOG, message, context, statusCode);
@@ -43,7 +52,7 @@ export class LoggerService implements AppLogger {
     context?: string,
     statusCode?: number,
     trace?: string,
-  ) {
+  ): void {
     const ctx: IRequestContext | undefined = this.requestCtx.getContext();
 
     const payload = {
@@ -53,7 +62,6 @@ export class LoggerService implements AppLogger {
       statusCode: statusCode ?? null,
       trace: trace ?? null,
       createdAt: new Date().toISOString(),
-
       request: {
         ipAddress: ctx?.ip_address ?? null,
         host: ctx?.host ?? null,
@@ -65,6 +73,22 @@ export class LoggerService implements AppLogger {
       },
     };
 
-    void this.rabbitmqService.publish('logs.exchange', 'logs.routing', payload);
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('RabbitMQ not available after timeout')),
+        LoggerService.PUBLISH_TIMEOUT_MS,
+      ),
+    );
+
+    Promise.race([
+      this.rabbitmqService.publish(this.exchange, this.routingKey, payload),
+      timeout,
+    ]).catch((err: unknown) => {
+      console.error(
+        'Failed to publish log to RabbitMQ, falling back to stdout:',
+        err instanceof Error ? err.message : err,
+      );
+      console.log(JSON.stringify(payload));
+    });
   }
 }
