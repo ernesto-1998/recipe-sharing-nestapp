@@ -11,8 +11,6 @@ export class LoggerService implements AppLogger {
   private readonly exchange: string;
   private readonly routingKey: string;
 
-  private static readonly PUBLISH_TIMEOUT_MS = 5000;
-
   constructor(
     private readonly rabbitmqService: RabbitMQService,
     private readonly requestCtx: RequestContextService,
@@ -73,23 +71,14 @@ export class LoggerService implements AppLogger {
       },
     };
 
-  const timeout = new Promise<never>((_, reject) => {
-      const id = setTimeout(
-        () => reject(new Error('RabbitMQ not available after timeout')),
-        LoggerService.PUBLISH_TIMEOUT_MS,
-      );
-      id.unref();
-    });
-
-    Promise.race([
-      this.rabbitmqService.publish(this.exchange, this.routingKey, payload),
-      timeout,
-    ]).catch((err: unknown) => {
-      console.error(
-        'Failed to publish log to RabbitMQ, falling back to stdout:',
-        err instanceof Error ? err.message : err,
-      );
-      console.log(JSON.stringify(payload));
-    });
+    this.rabbitmqService
+      .publish(this.exchange, this.routingKey, payload)
+      .catch((err: unknown) => {
+        console.error(
+          'Failed to publish log to RabbitMQ, falling back to stdout:',
+          err instanceof Error ? err.message : err,
+        );
+        console.log(JSON.stringify(payload));
+      });
   }
 }

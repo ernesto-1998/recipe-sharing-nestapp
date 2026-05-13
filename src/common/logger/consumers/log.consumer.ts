@@ -22,7 +22,7 @@ export class LogConsumer implements OnModuleInit {
 
   async onModuleInit(): Promise<void> {
     try {
-      await this.rabbitMQService.createConsumerChannel(
+      this.rabbitMQService.createConsumerChannel(
         async (ch: ConfirmChannel): Promise<void> => {
           await ch.prefetch(LogConsumer.PREFETCH_COUNT);
           await ch.assertExchange(LOG_EXCHANGE, RabbitMQExchangeType.DIRECT, {
@@ -38,10 +38,10 @@ export class LogConsumer implements OnModuleInit {
             },
             { noAck: false },
           );
+          this.logger.log('LogConsumer subscribed to logs.queue');
         },
       );
 
-      this.logger.log('LogConsumer subscribed to logs.queue');
     } catch (err) {
       this.logger.error('Failed to initialize LogConsumer', err);
     }

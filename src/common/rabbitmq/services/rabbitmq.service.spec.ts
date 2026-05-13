@@ -17,7 +17,7 @@ describe('RabbitMQService', () => {
     close: jest.Mock;
     isConnected: jest.Mock;
   };
-  let mockChannelWrapper: {
+  let mockPublisherChannel: {
     publish: jest.Mock;
     close: jest.Mock;
     on: jest.Mock;
@@ -30,7 +30,7 @@ describe('RabbitMQService', () => {
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
 
-    mockChannelWrapper = {
+    mockPublisherChannel = {
       publish: jest.fn().mockResolvedValue(true),
       close: jest.fn().mockResolvedValue(undefined),
       on: jest.fn(),
@@ -38,14 +38,7 @@ describe('RabbitMQService', () => {
 
     mockConnection = {
       on: jest.fn(),
-      createChannel: jest.fn().mockImplementation(
-        (opts?: { json?: boolean; setup?: Function }) => {
-          if (opts?.setup) {
-            return { on: jest.fn() };
-          }
-          return mockChannelWrapper;
-        },
-      ),
+      createChannel: jest.fn().mockReturnValue(mockPublisherChannel),
       close: jest.fn().mockResolvedValue(undefined),
       isConnected: jest.fn().mockReturnValue(true),
     };
@@ -107,17 +100,6 @@ describe('RabbitMQService', () => {
       expect(mockConnection.createChannel).toHaveBeenCalledWith({ json: true });
     });
 
-    it('should resolve channelReady when connect event fires', () => {
-      service.onModuleInit();
-
-      const connectHandler = mockConnection.on.mock.calls.find(
-        (call) => call[0] === 'connect',
-      )[1];
-      connectHandler();
-
-      expect(service.connected).toBe(true);
-    });
-
     it('should only warn on connectFailed without rejecting', () => {
       service.onModuleInit();
 
@@ -145,10 +127,6 @@ describe('RabbitMQService', () => {
 
       expect(service.connected).toBe(false);
     });
-
-    it('should return false when connection is null', () => {
-      expect(service.connected).toBe(false);
-    });
   });
 
   describe('onModuleDestroy', () => {
@@ -157,38 +135,28 @@ describe('RabbitMQService', () => {
 
       await service.onModuleDestroy();
 
-      expect(mockChannelWrapper.close).toHaveBeenCalled();
+      expect(mockPublisherChannel.close).toHaveBeenCalled();
       expect(mockConnection.close).toHaveBeenCalled();
     });
 
     it('should handle errors during graceful shutdown', async () => {
-      mockChannelWrapper.close.mockRejectedValue(new Error('Close failed'));
+      mockPublisherChannel.close.mockRejectedValue(new Error('Close failed'));
 
       service.onModuleInit();
 
-      await expect(service.onModuleDestroy()).resolves.not.toThrow();
-    });
-
-    it('should not throw when channelWrapper is null', async () => {
       await expect(service.onModuleDestroy()).resolves.not.toThrow();
     });
   });
 
   describe('publish', () => {
-    function initServiceWithConnect(): void {
+    beforeEach(() => {
       service.onModuleInit();
-      const connectHandler = mockConnection.on.mock.calls.find(
-        (call) => call[0] === 'connect',
-      )[1];
-      connectHandler();
-    }
+    });
 
-    it('should publish message via channelWrapper', async () => {
-      initServiceWithConnect();
-
+    it('should publish message via publisherChannel', async () => {
       await service.publish('test.exchange', 'test.routing', { test: 'data' });
 
-      expect(mockChannelWrapper.publish).toHaveBeenCalledWith(
+      expect(mockPublisherChannel.publish).toHaveBeenCalledWith(
         'test.exchange',
         'test.routing',
         { test: 'data' },
@@ -197,11 +165,9 @@ describe('RabbitMQService', () => {
     });
 
     it('should merge default options with provided options', async () => {
-      initServiceWithConnect();
-
       await service.publish('ex', 'rk', { data: 'test' }, { expiration: '1000' });
 
-      expect(mockChannelWrapper.publish).toHaveBeenCalledWith(
+      expect(mockPublisherChannel.publish).toHaveBeenCalledWith(
         'ex',
         'rk',
         { data: 'test' },
@@ -209,142 +175,56 @@ describe('RabbitMQService', () => {
       );
     });
 
-    it('should throw when channel is not available', async () => {
-      (service as any).resolveChannelReady();
-      (service as any).channelWrapper = null;
-
-      await expect(
-        service.publish('ex', 'rk', { data: 'test' }),
-      ).rejects.toThrow('RabbitMQ channel is not available');
-    });
-
     it('should throw when message is not confirmed by broker', async () => {
-      mockChannelWrapper.publish.mockResolvedValue(false);
-      initServiceWithConnect();
+      mockPublisherChannel.publish.mockResolvedValue(false);
 
       await expect(
         service.publish('ex', 'rk', { data: 'test' }),
       ).rejects.toThrow('Message was not confirmed by RabbitMQ broker');
     });
 
-    it('should wait for channelReady before publishing', async () => {
-      service.onModuleInit();
+    it('should throw when publish times out', async () => {
+      jest.useFakeTimers();
+
+      mockPublisherChannel.publish.mockReturnValue(new Promise<never>(() => {}));
 
       const publishPromise = service.publish('ex', 'rk', { data: 'test' });
 
-      expect(mockChannelWrapper.publish).not.toHaveBeenCalled();
+      jest.runAllTimers();
+      await Promise.resolve();
 
-      const connectHandler = mockConnection.on.mock.calls.find(
-        (call) => call[0] === 'connect',
-      )[1];
-      connectHandler();
+      await expect(publishPromise).rejects.toThrow(
+        'RabbitMQ publish timeout exceeded',
+      );
 
-      await publishPromise;
-
-      expect(mockChannelWrapper.publish).toHaveBeenCalled();
+      jest.useRealTimers();
     });
   });
 
   describe('createConsumerChannel', () => {
-    function initServiceWithConnect(): void {
+    beforeEach(() => {
       service.onModuleInit();
-      const connectHandler = mockConnection.on.mock.calls.find(
-        (call) => call[0] === 'connect',
-      )[1];
-      connectHandler();
-    }
+    });
 
-    it('should create a consumer channel with setup function', async () => {
-      const setup = jest.fn().mockResolvedValue(undefined);
+    it('should create a consumer channel with the provided setup function', () => {
+      const setup = jest.fn();
 
-      mockConnection.createChannel = jest.fn().mockImplementation(
-        (opts?: { json?: boolean; setup?: Function }) => {
-          if (opts?.setup) {
-            opts.setup({});
-          }
-          return { on: jest.fn() };
-        },
-      );
-
-      initServiceWithConnect();
-
-      await service.createConsumerChannel(setup);
+      const consumerChannel = service.createConsumerChannel(setup);
 
       expect(mockConnection.createChannel).toHaveBeenCalledWith({
         json: true,
-        setup: expect.any(Function),
+        setup,
       });
-      expect(setup).toHaveBeenCalled();
+      expect(consumerChannel).toBe(mockPublisherChannel);
     });
 
-    it('should register error handler on consumer channel', async () => {
-      const setup = jest.fn().mockResolvedValue(undefined);
-      const mockConsumerChannel = { on: jest.fn() };
+    it('should return the channel created by the connection', () => {
+      const customChannel = { on: jest.fn(), close: jest.fn() };
+      mockConnection.createChannel.mockReturnValue(customChannel);
 
-      mockConnection.createChannel = jest.fn().mockImplementation(
-        (opts?: { json?: boolean; setup?: Function }) => {
-          if (opts?.setup) {
-            opts.setup({});
-          }
-          return mockConsumerChannel;
-        },
-      );
+      const result = service.createConsumerChannel(jest.fn());
 
-      initServiceWithConnect();
-
-      await service.createConsumerChannel(setup);
-
-      expect(mockConsumerChannel.on).toHaveBeenCalledWith(
-        'error',
-        expect.any(Function),
-      );
-    });
-
-    it('should throw when connection is not initialized', async () => {
-      (service as any).resolveChannelReady();
-      (service as any).connection = null;
-
-      await expect(
-        service.createConsumerChannel(jest.fn()),
-      ).rejects.toThrow('RabbitMQ connection is not initialized');
-    });
-
-    it('should reject promise when setup function throws', async () => {
-      const setup = jest.fn().mockRejectedValue(new Error('Setup failed'));
-
-      mockConnection.createChannel = jest.fn().mockImplementation(
-        (opts?: { json?: boolean; setup?: Function }) => {
-          if (opts?.setup) {
-            opts.setup({});
-          }
-          return { on: jest.fn() };
-        },
-      );
-
-      initServiceWithConnect();
-
-      await expect(service.createConsumerChannel(setup)).rejects.toThrow(
-        'Setup failed',
-      );
-    });
-
-    it('should reject with Error when setup throws a non-Error value', async () => {
-      const setup = jest.fn().mockRejectedValue('string error');
-
-      mockConnection.createChannel = jest.fn().mockImplementation(
-        (opts?: { json?: boolean; setup?: Function }) => {
-          if (opts?.setup) {
-            opts.setup({});
-          }
-          return { on: jest.fn() };
-        },
-      );
-
-      initServiceWithConnect();
-
-      await expect(service.createConsumerChannel(setup)).rejects.toThrow(
-        'string error',
-      );
+      expect(result).toBe(customChannel);
     });
   });
 });

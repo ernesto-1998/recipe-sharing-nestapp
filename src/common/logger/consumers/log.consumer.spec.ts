@@ -45,6 +45,12 @@ describe('LogConsumer', () => {
     },
   };
 
+  function setupConsumerChannel(
+    setup: (ch: typeof mockChannel) => Promise<void>,
+  ): void {
+    setup(mockChannel);
+  }
+
   beforeEach(async () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
@@ -67,11 +73,7 @@ describe('LogConsumer', () => {
     };
 
     const mockRabbitMQService = {
-      createConsumerChannel: jest.fn().mockImplementation(
-        async (setup: (ch: typeof mockChannel) => Promise<void>) => {
-          await setup(mockChannel);
-        },
-      ),
+      createConsumerChannel: jest.fn().mockImplementation(setupConsumerChannel),
     };
 
     const mockPostgresLogRepository = {
@@ -97,10 +99,19 @@ describe('LogConsumer', () => {
   });
 
   describe('onModuleInit', () => {
-    it('should set up the consumer channel with exchange, queue, and binding', async () => {
+    it('should pass the exchange/queue/binding setup to createConsumerChannel', async () => {
       await logConsumer.onModuleInit();
 
       expect(rabbitMQService.createConsumerChannel).toHaveBeenCalledTimes(1);
+      expect(rabbitMQService.createConsumerChannel).toHaveBeenCalledWith(
+        expect.any(Function),
+      );
+    });
+
+    it('should set up prefetch, exchange, queue, binding and consume inside the setup callback', async () => {
+      await logConsumer.onModuleInit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       expect(mockChannel.prefetch).toHaveBeenCalledWith(10);
       expect(mockChannel.assertExchange).toHaveBeenCalledWith(
         LOG_EXCHANGE,
@@ -123,9 +134,9 @@ describe('LogConsumer', () => {
     });
 
     it('should catch and log errors when initialization fails', async () => {
-      rabbitMQService.createConsumerChannel.mockRejectedValue(
-        new Error('Connection failed'),
-      );
+      rabbitMQService.createConsumerChannel.mockImplementation(() => {
+        throw new Error('Channel setup failed');
+      });
 
       await expect(logConsumer.onModuleInit()).resolves.not.toThrow();
     });
@@ -134,6 +145,7 @@ describe('LogConsumer', () => {
   describe('processMessage (via consume callback)', () => {
     beforeEach(async () => {
       await logConsumer.onModuleInit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     it('should insert parsed message into postgres and ack on success', async () => {

@@ -246,16 +246,12 @@ describe('LoggerService', () => {
     });
 
     it('should fallback to stdout when publish times out', async () => {
-      jest.useFakeTimers();
-      rabbitmqService.publish.mockReturnValue(new Promise<never>(() => {}));
+      rabbitmqService.publish.mockRejectedValue(
+        new Error('RabbitMQ not available after timeout'),
+      );
 
       loggerService.log('timeout test');
-
-      jest.runAllTimers();
-
-      await Promise.resolve();
-      await Promise.resolve();
-      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Failed to publish log to RabbitMQ, falling back to stdout:',
