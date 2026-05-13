@@ -73,12 +73,13 @@ export class LoggerService implements AppLogger {
       },
     };
 
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(
+  const timeout = new Promise<never>((_, reject) => {
+      const id = setTimeout(
         () => reject(new Error('RabbitMQ not available after timeout')),
         LoggerService.PUBLISH_TIMEOUT_MS,
-      ),
-    );
+      );
+      id.unref();
+    });
 
     Promise.race([
       this.rabbitmqService.publish(this.exchange, this.routingKey, payload),
