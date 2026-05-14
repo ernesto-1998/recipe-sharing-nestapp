@@ -13,9 +13,9 @@ This API is currently under active development, with future plans including **us
 - Role-based access control and privacy settings
 - Recipe management (CRUD)
 - Pagination, filtering, and case-insensitive search
-- Detailed request logging and async context tracking
+- Event-driven logging via RabbitMQ with async context tracking
 - Swagger documentation
-- Dual database setup (MongoDB + PostgreSQL)
+- Dual database setup (MongoDB + PostgreSQL) with RabbitMQ message broker
 - Dockerized environment for easy deployment
 
 ---
@@ -37,6 +37,8 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 - [✔️] **Context Module**
 - [✔️] **Comment Module**
 - [✔️] **OAuth2 with Google Provider**
+- [✔️] **RabbitMQ / Event-Driven Logging**
+- [ ] **Role-Based Access Control (RBAC) implementation**
 - [ ] **Favorite Recipes**
 - [ ] **Search History**
 - [ ] **Reports & Moderation**
@@ -79,15 +81,75 @@ All modules are wired together through **NestJS dependency injection**, ensuring
 
 ## 🧰 Common Modules
 
+#### **RabbitMQModule**
+- Wraps `amqp-connection-manager` and `amqplib` to provide a reusable RabbitMQ integration.
+- Manages a single connection with automatic reconnection and heartbeat monitoring.
+- Exposes a dedicated publisher channel with timeout handling and message confirmation.
+- Provides `createConsumerChannel()` for consumers to declare their own queues, exchanges, and bindings.
+- Designed as a generic infrastructure module, reusable across any feature that needs asynchronous messaging.
+
 #### **Logger Module**
-- Custom logging service that stores logs in **PostgreSQL**.
+- Custom logging service that publishes log entries as **RabbitMQ messages** instead of writing directly to the database.
 - Captures details such as HTTP method, request path, user info, and stack traces.
-- Supports multiple log levels (info, warn, error, debug).
+- Supports multiple log levels (log, error, warn, debug, verbose).
+- Falls back to `stdout` if RabbitMQ is temporarily unavailable.
+
+#### **LogConsumerModule**
+- Consumes log messages from RabbitMQ and persists them to **PostgreSQL**.
+- Declares its own queue topology: a `direct` exchange (`logs.exchange`) bound to a durable queue (`logs.queue`) via routing key `logs.routing`.
+- Uses manual message acknowledgements (`ack`/`nack`) to ensure no log entries are lost on failure.
+- Implements prefetch limiting to avoid overwhelming the database under high throughput.
 
 #### **Context Module**
 - Uses **asynchronous local storage** to maintain contextual information per request.
 - Passes request metadata automatically to the Logger module for enhanced observability.
 - Metadata includes protocol, host, route, HTTP method, authenticated user, and more.
+
+---
+
+## 📡 Event-Driven Logging Architecture
+
+The logging system follows a **producer-consumer** pattern over RabbitMQ, completely decoupling the request lifecycle from log persistence.
+
+### Data Flow
+
+1. **Producer** — The `LoggerService` (injected as `AppLogger`) acts as a producer. Whenever a controller, service, or middleware calls a log method, the service enriches the entry with request context from `RequestContextService` and publishes the payload to the `logs.exchange` exchange with routing key `logs.routing`.
+2. **Exchange & Queue** — The exchange is of type `direct` and is declared as durable. A durable queue `logs.queue` is bound to it, ensuring messages survive broker restarts.
+3. **Consumer** — The `LogConsumer` runs in its own channel, consumes messages from `logs.queue`, deserializes each `ILogMessage`, and inserts it into PostgreSQL via `PostgresLogRepository`.
+4. **Acknowledgment** — After a successful insert, the consumer sends an `ack`. If processing fails, it sends a `nack` (without requeue) to discard the malformed message. This guarantees at-least-once delivery semantics for successfully processed messages.
+
+### RabbitMQ Integration Details
+
+- **Connection Management** — A single `AmqpConnectionManager` instance is created at application startup using the `amqp-connection-manager` library. Connection parameters (host, port, credentials, vhost) are resolved from environment variables.
+- **Automatic Reconnection** — The connection is configured with a 5-second reconnect interval and up to 10 heartbeat intervals. The library transparently re-establishes the TCP connection and recreates channels when the broker becomes available again after a failure.
+- **Publisher Channel** — A dedicated `ChannelWrapper` is created for publishing. Messages are serialized as JSON and published with the `persistent: true` flag. Each publish operation has a 5-second timeout; if the broker does not confirm the message within that window, the operation rejects with an error.
+- **Consumer Channel** — Consumers create their own channels via `createConsumerChannel()`, which accepts a setup callback. This callback runs every time the channel is created (including after reconnection), ensuring queue topology is always declared.
+- **Queue Topology** — The log consumer asserts a durable `direct` exchange (`logs.exchange`), a durable queue (`logs.queue`), and binds them with the routing key `logs.routing`. Durable exchanges and queues survive broker restarts.
+- **Prefetch** — The consumer sets a prefetch count of 10, limiting the number of unacknowledged messages delivered to the consumer at any time. This prevents unbounded memory growth and provides back-pressure.
+- **Message Acknowledgements** — The consumer uses `noAck: false` and manually calls `ch.ack(msg)` on success. On processing failure, `ch.nack(msg, false, false)` is called to discard the message (no requeue), preventing poison messages from cycling indefinitely.
+- **Persistent Messages** — All published messages carry the `persistent: true` option, instructing RabbitMQ to write them to disk. This ensures messages are not lost during broker crashes.
+- **Failure Handling** — If `LoggerService.publish()` fails (broker unavailable, timeout), the error is caught and logged to `stdout` as a fallback. The consumer gracefully handles `null` messages, database errors, and nack failures without crashing.
+
+### Decoupling Benefits
+
+- **Request lifecycle isolation** — HTTP responses are never blocked by database write latency. Log publication is asynchronous and fire-and-forget.
+- **Resilience** — If PostgreSQL is down, the consumer pauses without affecting API availability. Logs accumulate in the queue and are drained once the database recovers.
+- **Scalability** — Multiple consumer instances can be deployed to process logs in parallel. The prefetch setting prevents any single consumer from buffering too many in-flight messages.
+- **Maintainability** — The producer only knows about the exchange and routing key; it has no direct dependency on PostgreSQL, the schema, or the repository implementation. The consumer owns all persistence concerns.
+
+---
+
+## 🔄 Scalability & Future Async Workflows
+
+The RabbitMQ integration was designed as a **reusable, modular infrastructure layer** (`RabbitMQModule`). Although currently used exclusively for event-driven logging, the same publish and consumer channel APIs can support any asynchronous workflow:
+
+- **Notifications** — Push notifications or in-app alerts for comments, follows, or recipe interactions.
+- **Emails** — Offload email sending (welcome emails, password resets, digests) to background consumers.
+- **Background Jobs** — Image processing, recipe import/export, data aggregation tasks.
+- **Analytics Pipelines** — Collect and forward usage metrics, page views, or search trends to a dedicated analytics queue.
+- **Audit Events** — Capture sensitive operations (profile changes, recipe deletions) in an immutable audit log.
+
+Each new workflow follows the same pattern: define an exchange/queue topology in a dedicated consumer module, use `RabbitMQService.publish()` from the producing side, and implement a consumer that processes messages asynchronously. The `RabbitMQModule` handles connection lifecycle, reconnection, and channel management transparently.
 
 ---
 
@@ -218,8 +280,17 @@ POSTGRES_USER=neto
 POSTGRES_PASSWORD=neto
 POSTGRES_DB=recipe_logs_db
 
+# RabbitMQ Configuration
+# (Used for event-driven logging and async messaging)
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
+RABBITMQ_PROTOCOL=amqp
+RABBITMQ_VHOST=/
+
 # JWT Configuration
-JWT_SECRET=EXC'89&&55jkl'
+JWT_SECRET=EXC'89&&55jkl' (This is just for testing, on production environments this secret must be different)
 
 # Rate Limiting
 RATE_LIMIT_TTL=60000
@@ -275,13 +346,35 @@ http://localhost:{APP_PORT}/api
 | **Language** | TypeScript |
 | **Framework** | NestJS |
 | **Databases** | MongoDB, PostgreSQL |
+| **Message Broker** | RabbitMQ |
 | **Authentication** | JWT, Local Strategy, OAuth Google Provider |
 | **Containerization** | Docker, Docker Compose |
 | **ORM/ODM** | Mongoose |
 | **Documentation** | Swagger |
-| **Logging** | Custom Logger Module + PostgreSQL |
+| **Logging** | Event-driven via RabbitMQ + PostgreSQL |
 | **Platform** | Node.js |
 | **Future Enhancements** | Favorites, Ratings |
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+The project includes comprehensive unit tests for the messaging and logging infrastructure:
+
+- **RabbitMQService** — Verifies connection URL construction, event listener registration, publisher channel creation, graceful shutdown, publish confirmation, and timeout behavior.
+- **LoggerService** — Validates that each log level publishes a correctly structured message to the expected exchange and routing key, includes request context when available, and falls back to `stdout` when the broker is unreachable.
+- **LogConsumer** — Tests the full consume cycle: exchange/queue declaration, message parsing, PostgreSQL insertion, `ack` on success, `nack` on processing errors, and graceful handling of `null` messages and nack failures.
+- **PostgresLogRepository** — Ensures correct SQL generation, parameter binding, and error propagation.
+
+### Mocking Strategy
+
+All RabbitMQ tests use `amqp-connection-manager` as a mocked dependency. `connect`, `createChannel`, `publish`, `ack`, `nack`, and channel setup callbacks are replaced with `jest.fn()` implementations, allowing the test suite to run without a live RabbitMQ broker. This approach keeps tests fast, deterministic, and suitable for CI environments.
+
+### Resilience & Error Handling
+
+Tests cover edge cases such as broker disconnection, publish timeouts, message confirmation failures, database write errors, consumer initialization failures, and graceful shutdown scenarios.
 
 ---
 
