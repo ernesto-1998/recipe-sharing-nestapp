@@ -6,10 +6,7 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import {
-  OAuthProviderNameDto,
-  AccessTokenDto,
-} from '../../dto';
+import { OAuthProviderNameDto, AccessTokenDto } from '../../dto';
 import { OAuthService } from '../../services/oauth.service';
 import {
   ApiBadRequestResponse,

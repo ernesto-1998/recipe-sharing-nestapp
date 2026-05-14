@@ -11,7 +11,6 @@ describe('OAuthController', () => {
   let oauthService: jest.Mocked<OAuthService>;
 
   beforeEach(async () => {
-
     const mockOAuthService = {
       getAuthorizationUrl: jest.fn(),
       handleOAuthCallback: jest.fn(),

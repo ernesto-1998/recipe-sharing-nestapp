@@ -45,7 +45,10 @@ describe('OAuthService', () => {
       providers: [
         OAuthService,
         { provide: OAuthProviderFactory, useValue: mockOAuthProviderFactory },
-        { provide: OAuthAccountRepository, useValue: mockOAuthAccountRepository },
+        {
+          provide: OAuthAccountRepository,
+          useValue: mockOAuthAccountRepository,
+        },
         { provide: UserService, useValue: mockUserService },
         { provide: AuthService, useValue: mockAuthService },
       ],
@@ -61,7 +64,9 @@ describe('OAuthService', () => {
       mockOAuthProviderFactory.getProvider.mockReturnValue(mockOAuthProvider);
       mockOAuthProvider.authorize.mockReturnValue('https://auth.url');
 
-      const result = await service.getAuthorizationUrl(OAuthProviderName.GOOGLE);
+      const result = await service.getAuthorizationUrl(
+        OAuthProviderName.GOOGLE,
+      );
 
       expect(result).toBe('https://auth.url');
       expect(mockOAuthProviderFactory.getProvider).toHaveBeenCalledWith(
@@ -90,9 +95,7 @@ describe('OAuthService', () => {
       mockOAuthProviderFactory.getProvider.mockReturnValue(mockOAuthProvider);
       mockOAuthProvider.callback.mockResolvedValue(oauthUser);
 
-      jest
-        .spyOn<any, any>(service, 'handleOAuthLogin')
-        .mockResolvedValue(user);
+      jest.spyOn<any, any>(service, 'handleOAuthLogin').mockResolvedValue(user);
 
       mockAuthService.logIn.mockResolvedValue({ accessToken: 'jwt-token' });
 
@@ -177,9 +180,7 @@ describe('OAuthService', () => {
       };
 
       mockOAuthAccountRepository.findOneByProvider.mockResolvedValue(null);
-      mockUserService.findByEmail.mockRejectedValue(
-        new NotFoundException(),
-      );
+      mockUserService.findByEmail.mockRejectedValue(new NotFoundException());
       mockUserService.createFromOAuthUser.mockResolvedValue(newUser);
       mockOAuthAccountRepository.create.mockResolvedValue(null);
 

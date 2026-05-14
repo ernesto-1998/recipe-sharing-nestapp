@@ -1,15 +1,16 @@
 import { Global, Module } from '@nestjs/common';
-import { PostgresLogger } from './postgres-logger.service';
+import { LoggerService } from './services/logger.service';
+import { RabbitMQModule } from 'src/common/rabbitmq/rabbitmq.module';
 import { CustomToken } from '../enums/custom-tokens-providers.enum';
-import { RequestContextModule } from '../context/request-context.module';
 
 @Global()
 @Module({
+  imports: [RabbitMQModule],
   providers: [
-    PostgresLogger,
+    LoggerService,
     {
       provide: CustomToken.APP_LOGGER,
-      useExisting: PostgresLogger,
+      useExisting: LoggerService,
     },
   ],
   exports: [CustomToken.APP_LOGGER],
