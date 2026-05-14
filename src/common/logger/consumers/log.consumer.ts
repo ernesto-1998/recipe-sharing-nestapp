@@ -41,7 +41,6 @@ export class LogConsumer implements OnModuleInit {
           this.logger.log('LogConsumer subscribed to logs.queue');
         },
       );
-
     } catch (err) {
       this.logger.error('Failed to initialize LogConsumer', err);
     }

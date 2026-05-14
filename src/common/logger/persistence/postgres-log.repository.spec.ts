@@ -77,7 +77,10 @@ describe('PostgresLogRepository', () => {
     it('should execute insert query with correct SQL and values', async () => {
       await repository.insert(mockLogMessage);
 
-      expect(mockPool.query).toHaveBeenCalledWith(expectedQuery, expectedValues);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expectedQuery,
+        expectedValues,
+      );
     });
 
     it('should handle log message with all null fields', async () => {

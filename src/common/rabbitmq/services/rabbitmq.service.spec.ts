@@ -82,11 +82,20 @@ describe('RabbitMQService', () => {
 
       service.onModuleInit();
 
-      expect(configService.get).toHaveBeenCalledWith('RABBITMQ_HOST', 'localhost');
+      expect(configService.get).toHaveBeenCalledWith(
+        'RABBITMQ_HOST',
+        'localhost',
+      );
       expect(configService.get).toHaveBeenCalledWith('RABBITMQ_PORT', '5672');
       expect(configService.get).toHaveBeenCalledWith('RABBITMQ_USER', 'guest');
-      expect(configService.get).toHaveBeenCalledWith('RABBITMQ_PASSWORD', 'guest');
-      expect(configService.get).toHaveBeenCalledWith('RABBITMQ_PROTOCOL', 'amqp');
+      expect(configService.get).toHaveBeenCalledWith(
+        'RABBITMQ_PASSWORD',
+        'guest',
+      );
+      expect(configService.get).toHaveBeenCalledWith(
+        'RABBITMQ_PROTOCOL',
+        'amqp',
+      );
       expect(configService.get).toHaveBeenCalledWith('RABBITMQ_VHOST', '/');
 
       expect(mockConnect).toHaveBeenCalledWith([expectedUrl], {
@@ -94,9 +103,18 @@ describe('RabbitMQService', () => {
         heartbeatIntervalInSeconds: 10,
       });
 
-      expect(mockConnection.on).toHaveBeenCalledWith('connect', expect.any(Function));
-      expect(mockConnection.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
-      expect(mockConnection.on).toHaveBeenCalledWith('connectFailed', expect.any(Function));
+      expect(mockConnection.on).toHaveBeenCalledWith(
+        'connect',
+        expect.any(Function),
+      );
+      expect(mockConnection.on).toHaveBeenCalledWith(
+        'disconnect',
+        expect.any(Function),
+      );
+      expect(mockConnection.on).toHaveBeenCalledWith(
+        'connectFailed',
+        expect.any(Function),
+      );
       expect(mockConnection.createChannel).toHaveBeenCalledWith({ json: true });
     });
 
@@ -165,7 +183,12 @@ describe('RabbitMQService', () => {
     });
 
     it('should merge default options with provided options', async () => {
-      await service.publish('ex', 'rk', { data: 'test' }, { expiration: '1000' });
+      await service.publish(
+        'ex',
+        'rk',
+        { data: 'test' },
+        { expiration: '1000' },
+      );
 
       expect(mockPublisherChannel.publish).toHaveBeenCalledWith(
         'ex',
@@ -186,7 +209,9 @@ describe('RabbitMQService', () => {
     it('should throw when publish times out', async () => {
       jest.useFakeTimers();
 
-      mockPublisherChannel.publish.mockReturnValue(new Promise<never>(() => {}));
+      mockPublisherChannel.publish.mockReturnValue(
+        new Promise<never>(() => {}),
+      );
 
       const publishPromise = service.publish('ex', 'rk', { data: 'test' });
 

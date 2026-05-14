@@ -63,11 +63,13 @@ describe('LogConsumer', () => {
       assertExchange: jest.fn().mockResolvedValue(undefined),
       assertQueue: jest.fn().mockResolvedValue(undefined),
       bindQueue: jest.fn().mockResolvedValue(undefined),
-      consume: jest.fn().mockImplementation(
-        (_queue: string, callback: (msg: unknown) => void) => {
-          capturedConsumeCallback = callback;
-        },
-      ),
+      consume: jest
+        .fn()
+        .mockImplementation(
+          (_queue: string, callback: (msg: unknown) => void) => {
+            capturedConsumeCallback = callback;
+          },
+        ),
       ack: jest.fn(),
       nack: jest.fn(),
     };
